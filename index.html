@@ -995,8 +995,8 @@ function updateInferred(actions, decisions) {
     });
     elActList.innerHTML = sorted.map(a =>
       `<div class="inf-row${a.isDone ? ' inf-row-done' : ''}">
-        <span class="inf-who">${a.owners.map(o => '@' + o).join(', ')}</span>
-        <span class="inf-txt">${esc(a.text)}</span>
+        <span class="inf-who">${a.owners.join(', ')}</span>
+        <span class="inf-txt">${esc(a.text.replace(/@/g, ''))}</span>
         ${a.isDone
           ? `<span class="inf-done-note">${esc(a.doneNote)}</span>`
           : `<button class="inf-close-btn" onclick="app.closeAction(this)" data-fulltext="${esc(a.fullText)}" title="Mark done">✓</button>`
