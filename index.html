@@ -1086,7 +1086,7 @@
           <div class="hint">
             <b>Tab</b> indent &nbsp;·&nbsp; <b>Shift+Tab</b> outdent &nbsp;·&nbsp;
             <b>@name task</b> → action &nbsp;·&nbsp; <b>→ text</b> or <b>** text</b> → decision &nbsp;·&nbsp;
-            <b>!YYYY-MM-DD</b> → deadline
+            <b>!YYYY-MM-DD</b> → deadline &nbsp;·&nbsp; <b>!today</b> <b>!tomorrow</b> <b>!nextweek</b> → shortcuts
           </div>
           <div class="inferred" id="inferred" style="display:none">
             <div class="inf-sec" id="act-sec" style="display:none">
@@ -1502,6 +1502,40 @@
 
       // ── CONTENTEDITABLE KEYBOARD HANDLERS ──
       elNotes.addEventListener('keydown', e => {
+        // Expand !today / !tomorrow / !nextweek shortcuts on Space or Enter
+        if (e.key === ' ' || e.key === 'Enter') {
+          const sel = window.getSelection();
+          if (sel.rangeCount) {
+            const range = sel.getRangeAt(0);
+            if (range.startContainer.nodeType === Node.TEXT_NODE) {
+              const textNode = range.startContainer;
+              const offset = range.startOffset;
+              const textBefore = textNode.textContent.slice(0, offset);
+              const m = textBefore.match(/!(today|tomorrow|nextweek)$/i);
+              if (m) {
+                e.preventDefault();
+                const expanded = expandDeadlineShortcuts('!' + m[1]);
+                const start = offset - m[0].length;
+                const suffix = e.key === ' ' ? ' ' : '';
+                textNode.textContent =
+                  textNode.textContent.slice(0, start) + expanded + suffix +
+                  textNode.textContent.slice(offset);
+                const newRange = document.createRange();
+                newRange.setStart(textNode, start + expanded.length + suffix.length);
+                newRange.collapse(true);
+                sel.removeAllRanges();
+                sel.addRange(newRange);
+                elNotes.dispatchEvent(new Event('input'));
+                if (e.key === 'Enter') {
+                  // Fall through to normal Enter handling by re-dispatching
+                  elNotes.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+                }
+                return;
+              }
+            }
+          }
+        }
+
         // Handle Enter: create new <li> at same nesting level
         if (e.key === 'Enter') {
           e.preventDefault();
@@ -1566,6 +1600,18 @@
 
       elNotes.addEventListener('input', () => onNotesChange(htmlToText(elNotes.innerHTML)));
 
+      // ── DEADLINE SHORTCUTS ──
+      function expandDeadlineShortcuts(text) {
+        const today = new Date();
+        const fmt = d => d.toISOString().slice(0, 10);
+        const tomorrow = new Date(today); tomorrow.setDate(today.getDate() + 1);
+        const nextWeek = new Date(today); nextWeek.setDate(today.getDate() + 7);
+        return text
+          .replace(/!today\b/gi,    `!${fmt(today)}`)
+          .replace(/!tomorrow\b/gi, `!${fmt(tomorrow)}`)
+          .replace(/!nextweek\b/gi, `!${fmt(nextWeek)}`);
+      }
+
       // ── PARSE ──
       function parseActions(text) {
         const out = [];
@@ -1577,6 +1623,9 @@
 
           // Keep full text (with @mentions intact) for display
           let fullText = line.replace(/^[→\-\*\d.]+\s*/, '').replace(/\s+/g, ' ').trim();
+
+          // Expand deadline shortcuts before extracting
+          fullText = expandDeadlineShortcuts(fullText);
 
           // Extract deadline marker: !YYYY-MM-DD
           const deadlineMatch = fullText.match(/!(\d{4}-\d{2}-\d{2})/);
