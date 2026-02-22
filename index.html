@@ -534,10 +534,8 @@
     }
 
     .inf-close-btn {
-      position: absolute;
-      right: 0;
-      top: 50%;
-      transform: translateY(-50%);
+      flex-shrink: 0;
+      align-self: center;
       background: none;
       border: 1px solid var(--faint);
       border-radius: var(--r);
@@ -1631,8 +1629,8 @@
           });
           elActList.innerHTML = sorted.map(a =>
             `<div class="inf-row${a.isDone ? ' inf-row-done' : ''}">
-        <span class="inf-who">${a.owners.map(o => '@' + o).join(', ')}</span>
-        <span class="inf-txt">${esc(a.text)}</span>
+        <span class="inf-who">${a.owners.join(', ')}</span>
+        <span class="inf-txt">${esc(a.text.replace(/@/g, ''))}</span>
         ${a.deadline ? deadlineBadge(a.deadline) : ''}
         ${a.isDone
               ? `<span class="inf-done-note">${esc(a.doneNote)}</span>`
