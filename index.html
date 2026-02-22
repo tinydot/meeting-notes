@@ -198,11 +198,10 @@ input[type=date].mi, input[type=time].mi { cursor: pointer; }
   left: 0; min-width: 12px;
 }
 
-.inf-row { position: relative; }
 .inf-row-done { opacity: 0.5; }
 .inf-row-done .inf-txt { text-decoration: line-through; }
 .inf-close-btn {
-  position: absolute; right: 0; top: 50%; transform: translateY(-50%);
+  flex-shrink: 0; align-self: center;
   background: none; border: 1px solid var(--faint); border-radius: var(--r);
   color: var(--muted); font-size: 14px; padding: 2px 6px;
   cursor: pointer; opacity: 0; transition: opacity 0.15s, border-color 0.15s;
