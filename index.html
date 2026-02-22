@@ -1,706 +1,1325 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Minutes</title>
-<link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,500;1,400&family=JetBrains+Mono:wght@300;400&display=swap" rel="stylesheet">
-<style>
-*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Minutes</title>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,500;1,400&family=JetBrains+Mono:wght@300;400&display=swap"
+    rel="stylesheet">
+  <style>
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
 
-:root {
-  --bg: #fefefe;
-  --fg: #1c1c1c;
-  --muted: #999;
-  --faint: #e2e2e2;
-  --mono: 'JetBrains Mono', monospace;
-  --serif: 'Lora', serif;
-  --r: 3px;
-  --line-h: 2.0;
-  --font-sz: 13px;
-}
+    :root {
+      --bg: #fefefe;
+      --fg: #1c1c1c;
+      --muted: #999;
+      --faint: #e2e2e2;
+      --mono: 'JetBrains Mono', monospace;
+      --serif: 'Lora', serif;
+      --r: 3px;
+      --line-h: 2.0;
+      --font-sz: 13px;
+    }
 
-html, body { height: 100%; background: var(--bg); color: var(--fg); font-family: var(--mono); font-size: var(--font-sz); }
-.shell { display: flex; height: 100vh; }
+    html,
+    body {
+      height: 100%;
+      background: var(--bg);
+      color: var(--fg);
+      font-family: var(--mono);
+      font-size: var(--font-sz);
+    }
 
-/* ── RAIL ── */
-.rail {
-  width: 210px; min-width: 210px;
-  border-right: 1px solid var(--faint);
-  display: flex; flex-direction: column; overflow: hidden;
-}
-.rail-top { padding: 22px 18px 14px; border-bottom: 1px solid var(--faint); }
-.wordmark { font-family: var(--serif); font-size: 16px; font-weight: 500; letter-spacing: -0.3px; display: block; margin-bottom: 12px; }
-.btn-new {
-  width: 100%; padding: 7px 0;
-  background: var(--fg); color: var(--bg);
-  border: none; border-radius: var(--r);
-  font-family: var(--mono); font-size: 11px; letter-spacing: 0.4px;
-  cursor: pointer; transition: opacity 0.14s;
-}
-.btn-new:hover { opacity: 0.7; }
+    .shell {
+      display: flex;
+      height: 100vh;
+    }
 
-.search-box { padding: 10px 18px 6px; border-bottom: 1px solid var(--faint); }
-.search-box input {
-  width: 100%; border: none; background: transparent;
-  padding: 4px 0; font-family: var(--mono); font-size: 11px;
-  color: var(--fg); outline: none;
-  border-bottom: 1px solid var(--faint); transition: border-color 0.12s;
-}
-.search-box input::placeholder { color: var(--faint); }
-.search-box input:focus { border-color: var(--muted); }
+    /* ── RAIL ── */
+    .rail {
+      width: 210px;
+      min-width: 210px;
+      border-right: 1px solid var(--faint);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
 
-/* rail tabs */
-.rail-tabs { display: flex; border-bottom: 1px solid var(--faint); flex-shrink: 0; }
-.rail-tab {
-  flex: 1; padding: 7px 0;
-  background: none; border: none;
-  font-family: var(--mono); font-size: 10px; letter-spacing: 0.3px;
-  color: var(--muted); cursor: pointer;
-  border-bottom: 2px solid transparent;
-  transition: color 0.1s, border-color 0.1s;
-}
-.rail-tab:hover { color: var(--fg); }
-.rail-tab.active { color: var(--fg); border-bottom-color: var(--fg); margin-bottom: -1px; }
+    .rail-top {
+      padding: 22px 18px 14px;
+      border-bottom: 1px solid var(--faint);
+    }
 
-.note-list { flex: 1; overflow-y: auto; display: none; }
-.note-list.visible { display: block; }
-.note-list::-webkit-scrollbar { width: 3px; }
-.note-list::-webkit-scrollbar-thumb { background: var(--faint); }
+    .wordmark {
+      font-family: var(--serif);
+      font-size: 16px;
+      font-weight: 500;
+      letter-spacing: -0.3px;
+      display: block;
+      margin-bottom: 12px;
+    }
 
-.ni {
-  padding: 10px 18px; cursor: pointer;
-  border-bottom: 1px solid var(--faint);
-  transition: background 0.1s; position: relative;
-}
-.ni:hover { background: #f8f8f8; }
-.ni.active { background: #f4f4f4; }
-.ni.active::before {
-  content: ''; position: absolute;
-  left: 0; top: 22%; bottom: 22%;
-  width: 2px; background: var(--fg); border-radius: 2px;
-}
-.ni-title { font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-bottom: 2px; }
-.ni-sub { font-size: 10px; color: var(--muted); }
-.list-empty { padding: 20px 18px; font-size: 11px; color: var(--faint); }
+    .btn-new {
+      width: 100%;
+      padding: 7px 0;
+      background: var(--fg);
+      color: var(--bg);
+      border: none;
+      border-radius: var(--r);
+      font-family: var(--mono);
+      font-size: 11px;
+      letter-spacing: 0.4px;
+      cursor: pointer;
+      transition: opacity 0.14s;
+    }
 
-/* consolidated panels */
-.consolidated { flex: 1; display: none; flex-direction: column; }
-.consolidated.visible { display: flex; }
-.consolidated::-webkit-scrollbar { width: 3px; }
-.consolidated::-webkit-scrollbar-thumb { background: var(--faint); }
-.con-filter { padding: 8px 12px; border-bottom: 1px solid var(--faint); flex-shrink: 0; }
-.con-filter input {
-  width: 100%; border: none; background: transparent;
-  font-family: var(--mono); font-size: 11px; color: var(--fg);
-  outline: none; padding: 2px 0;
-  border-bottom: 1px solid var(--faint); transition: border-color 0.12s;
-}
-.con-filter input::placeholder { color: var(--faint); }
-.con-filter input:focus { border-color: var(--muted); }
-.con-list { flex: 1; overflow-y: auto; }
-.con-item {
-  padding: 8px 12px; border-bottom: 1px solid var(--faint);
-  cursor: pointer; transition: background 0.1s;
-}
-.con-item:hover { background: #f8f8f8; }
-.con-item-text { font-size: 11px; color: var(--fg); line-height: 1.5; margin-bottom: 3px; }
-.con-item-meta { font-size: 10px; color: var(--muted); }
-.con-item-who { font-style: italic; }
+    .btn-new:hover {
+      opacity: 0.7;
+    }
 
-.rail-foot { padding: 10px 12px; border-top: 1px solid var(--faint); display: flex; gap: 6px; flex-shrink: 0; }
-.rb {
-  flex: 1; padding: 6px 0;
-  border: 1px solid var(--faint); background: transparent;
-  border-radius: var(--r); font-family: var(--mono); font-size: 10px;
-  color: var(--muted); cursor: pointer;
-  transition: color 0.12s, border-color 0.12s;
-}
-.rb:hover { border-color: var(--fg); color: var(--fg); }
-.file-import-hidden { display: none; }
+    .search-box {
+      padding: 10px 18px 6px;
+      border-bottom: 1px solid var(--faint);
+    }
 
-/* ── MAIN ── */
-.main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
-.empty { flex: 1; display: flex; align-items: center; justify-content: center; font-size: 11px; color: var(--faint); }
-.editor { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+    .search-box input {
+      width: 100%;
+      border: none;
+      background: transparent;
+      padding: 4px 0;
+      font-family: var(--mono);
+      font-size: 11px;
+      color: var(--fg);
+      outline: none;
+      border-bottom: 1px solid var(--faint);
+      transition: border-color 0.12s;
+    }
 
-/* meta bar */
-.meta-bar {
-  display: flex; align-items: center;
-  padding: 0 44px; height: 42px;
-  border-bottom: 1px solid var(--faint); flex-shrink: 0;
-}
-.mf { display: flex; align-items: center; gap: 7px; padding-right: 16px; margin-right: 16px; border-right: 1px solid var(--faint); }
-.mf:last-of-type { border-right: none; }
-.ml { font-size: 9px; letter-spacing: 1.2px; text-transform: uppercase; color: var(--faint); }
-.mi { border: none; background: transparent; font-family: var(--mono); font-size: 12px; color: var(--fg); outline: none; caret-color: var(--fg); }
-.mi::placeholder { color: var(--faint); }
-input[type=date].mi, input[type=time].mi { cursor: pointer; }
-.meta-gap { flex: 1; }
-.del-btn {
-  background: none; border: none; font-family: var(--mono); font-size: 10px;
-  color: var(--faint); cursor: pointer; padding: 4px 6px; border-radius: var(--r);
-  transition: color 0.12s;
-}
-.del-btn:hover { color: #b33; }
+    .search-box input::placeholder {
+      color: var(--faint);
+    }
 
-/* title */
-.title-wrap { padding: 28px 44px 0; flex-shrink: 0; }
-.title-inp {
-  width: 100%; border: none; background: transparent;
-  font-family: var(--serif); font-size: 26px; font-weight: 500;
-  color: var(--fg); letter-spacing: -0.2px;
-  outline: none; caret-color: var(--fg); line-height: 1.3;
-}
-.title-inp::placeholder { color: var(--faint); font-style: italic; }
+    .search-box input:focus {
+      border-color: var(--muted);
+    }
 
-/* scroller */
-.scroller { flex: 1; overflow-y: auto; padding: 18px 44px 48px; }
-.scroller::-webkit-scrollbar { width: 4px; }
-.scroller::-webkit-scrollbar-thumb { background: var(--faint); border-radius: 2px; }
-.notes-lbl { font-size: 9px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--faint); margin-bottom: 10px; margin-top: 22px; }
+    /* rail tabs */
+    .rail-tabs {
+      display: flex;
+      border-bottom: 1px solid var(--faint);
+      flex-shrink: 0;
+    }
 
-/* ── TEXTAREA EDITOR ── */
-.notes-editor { min-height: 220px; }
+    .rail-tab {
+      flex: 1;
+      padding: 7px 0;
+      background: none;
+      border: none;
+      font-family: var(--mono);
+      font-size: 10px;
+      letter-spacing: 0.3px;
+      color: var(--muted);
+      cursor: pointer;
+      border-bottom: 2px solid transparent;
+      transition: color 0.1s, border-color 0.1s;
+    }
 
-.notes-editable {
-  outline: none; min-height: 220px;
-  font-family: var(--mono); font-size: var(--font-sz);
-  line-height: 1.7; color: var(--fg);
-  padding: 8px 0;
-}
-.notes-editable:empty::before {
-  content: attr(data-placeholder);
-  color: var(--faint); font-style: italic;
-}
-.notes-editable ol {
-  list-style: none; counter-reset: item; padding: 0; margin: 0;
-}
-.notes-editable li {
-  counter-increment: item;
-  margin-bottom: 8px; padding-left: 32px; position: relative;
-}
-.notes-editable li::before {
-  content: counter(item) ".";
-  position: absolute; left: 0; top: 0;
-  color: var(--muted); font-weight: 400;
-  min-width: 24px; text-align: right;
-}
-.notes-editable ul {
-  list-style: none; margin: 4px 0 0 0; padding: 0;
-}
-.notes-editable ul li {
-  counter-increment: none;
-  padding-left: 20px; margin-bottom: 4px;
-}
-.notes-editable ul li::before {
-  content: "–";
-  left: 0; min-width: 12px;
-}
+    .rail-tab:hover {
+      color: var(--fg);
+    }
 
-.inf-row { position: relative; }
-.inf-row-done { opacity: 0.5; }
-.inf-row-done .inf-txt { text-decoration: line-through; }
-.inf-close-btn {
-  position: absolute; right: 0; top: 50%; transform: translateY(-50%);
-  background: none; border: 1px solid var(--faint); border-radius: var(--r);
-  color: var(--muted); font-size: 14px; padding: 2px 6px;
-  cursor: pointer; opacity: 0; transition: opacity 0.15s, border-color 0.15s;
-}
-.inf-row:hover .inf-close-btn { opacity: 1; }
-.inf-close-btn:hover { border-color: var(--fg); color: var(--fg); }
-.inf-done-note {
-  font-size: 10px; color: var(--muted); font-style: italic;
-  display: block; margin-top: 2px;
-}
+    .rail-tab.active {
+      color: var(--fg);
+      border-bottom-color: var(--fg);
+      margin-bottom: -1px;
+    }
 
-.con-item { position: relative; }
-.con-item-done { opacity: 0.6; }
-.con-item-done .con-item-text { text-decoration: line-through; }
-.con-close-btn {
-  position: absolute; right: 8px; top: 8px;
-  background: var(--bg); border: 1px solid var(--faint); border-radius: var(--r);
-  color: var(--muted); font-size: 10px; padding: 3px 8px;
-  cursor: pointer; opacity: 0; transition: opacity 0.15s, border-color 0.15s;
-}
-.con-item:hover .con-close-btn { opacity: 1; }
-.con-close-btn:hover { border-color: var(--fg); color: var(--fg); }
-.con-item-done-note {
-  font-size: 10px; color: var(--muted); font-style: italic;
-  margin-top: 2px;
-}
+    .note-list {
+      flex: 1;
+      overflow-y: auto;
+      display: none;
+    }
 
-.dl-badge { font-size: 10px; padding: 1px 7px; border-radius: 2px; white-space: nowrap; letter-spacing: 0.2px; flex-shrink: 0; }
-.dl-overdue  { background: #fde8e8; color: #b33; }
-.dl-today    { background: #fff3cd; color: #c47a00; }
-.dl-upcoming { background: #f0f0f0; color: var(--muted); }
+    .note-list.visible {
+      display: block;
+    }
 
-.person-item {
-  padding: 12px 12px; cursor: pointer;
-  border-bottom: 1px solid var(--faint);
-  transition: background 0.1s;
-}
-.person-item:hover { background: #f8f8f8; }
-.person-item-active { background: #f4f4f4; position: relative; }
-.person-item-active::before {
-  content: ''; position: absolute;
-  left: 0; top: 22%; bottom: 22%;
-  width: 2px; background: var(--fg); border-radius: 2px;
-}
-.person-name { font-size: 12px; color: var(--fg); margin-bottom: 3px; }
-.person-count { font-size: 10px; color: var(--muted); }
+    .note-list::-webkit-scrollbar {
+      width: 3px;
+    }
 
-.person-back {
-  padding: 10px 12px; cursor: pointer;
-  border-bottom: 1px solid var(--faint);
-  font-size: 11px; color: var(--muted);
-  transition: color 0.1s;
-}
-.person-back:hover { color: var(--fg); }
+    .note-list::-webkit-scrollbar-thumb {
+      background: var(--faint);
+    }
 
-.person-header {
-  padding: 10px 12px;
-  border-bottom: 1px solid var(--faint);
-  font-size: 12px; font-weight: 500;
-  background: #f8f8f8;
-}
+    .ni {
+      padding: 10px 18px;
+      cursor: pointer;
+      border-bottom: 1px solid var(--faint);
+      transition: background 0.1s;
+      position: relative;
+    }
+
+    .ni:hover {
+      background: #f8f8f8;
+    }
+
+    .ni.active {
+      background: #f4f4f4;
+    }
+
+    .ni.active::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 22%;
+      bottom: 22%;
+      width: 2px;
+      background: var(--fg);
+      border-radius: 2px;
+    }
+
+    .ni-title {
+      font-size: 12px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      margin-bottom: 2px;
+    }
+
+    .ni-sub {
+      font-size: 10px;
+      color: var(--muted);
+    }
+
+    .list-empty {
+      padding: 20px 18px;
+      font-size: 11px;
+      color: var(--faint);
+    }
+
+    /* consolidated panels */
+    .consolidated {
+      flex: 1;
+      display: none;
+      flex-direction: column;
+    }
+
+    .consolidated.visible {
+      display: flex;
+    }
+
+    .consolidated::-webkit-scrollbar {
+      width: 3px;
+    }
+
+    .consolidated::-webkit-scrollbar-thumb {
+      background: var(--faint);
+    }
+
+    .con-filter {
+      padding: 8px 12px;
+      border-bottom: 1px solid var(--faint);
+      flex-shrink: 0;
+    }
+
+    .con-filter input {
+      width: 100%;
+      border: none;
+      background: transparent;
+      font-family: var(--mono);
+      font-size: 11px;
+      color: var(--fg);
+      outline: none;
+      padding: 2px 0;
+      border-bottom: 1px solid var(--faint);
+      transition: border-color 0.12s;
+    }
+
+    .con-filter input::placeholder {
+      color: var(--faint);
+    }
+
+    .con-filter input:focus {
+      border-color: var(--muted);
+    }
+
+    .con-list {
+      flex: 1;
+      overflow-y: auto;
+    }
+
+    .con-item {
+      padding: 8px 12px;
+      border-bottom: 1px solid var(--faint);
+      cursor: pointer;
+      transition: background 0.1s;
+    }
+
+    .con-item:hover {
+      background: #f8f8f8;
+    }
+
+    .con-item-text {
+      font-size: 11px;
+      color: var(--fg);
+      line-height: 1.5;
+      margin-bottom: 3px;
+    }
+
+    .con-item-meta {
+      font-size: 10px;
+      color: var(--muted);
+    }
+
+    .con-item-who {
+      font-style: italic;
+    }
+
+    .rail-foot {
+      padding: 10px 12px;
+      border-top: 1px solid var(--faint);
+      display: flex;
+      gap: 6px;
+      flex-shrink: 0;
+    }
+
+    .rb {
+      flex: 1;
+      padding: 6px 0;
+      border: 1px solid var(--faint);
+      background: transparent;
+      border-radius: var(--r);
+      font-family: var(--mono);
+      font-size: 10px;
+      color: var(--muted);
+      cursor: pointer;
+      transition: color 0.12s, border-color 0.12s;
+    }
+
+    .rb:hover {
+      border-color: var(--fg);
+      color: var(--fg);
+    }
+
+    .file-import-hidden {
+      display: none;
+    }
+
+    /* ── MAIN ── */
+    .main {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .empty {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+      color: var(--faint);
+    }
+
+    .editor {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    /* meta bar */
+    .meta-bar {
+      display: flex;
+      align-items: center;
+      padding: 0 44px;
+      height: 42px;
+      border-bottom: 1px solid var(--faint);
+      flex-shrink: 0;
+    }
+
+    .mf {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      padding-right: 16px;
+      margin-right: 16px;
+      border-right: 1px solid var(--faint);
+    }
+
+    .mf:last-of-type {
+      border-right: none;
+    }
+
+    .ml {
+      font-size: 9px;
+      letter-spacing: 1.2px;
+      text-transform: uppercase;
+      color: var(--faint);
+    }
+
+    .mi {
+      border: none;
+      background: transparent;
+      font-family: var(--mono);
+      font-size: 12px;
+      color: var(--fg);
+      outline: none;
+      caret-color: var(--fg);
+    }
+
+    .mi::placeholder {
+      color: var(--faint);
+    }
+
+    input[type=date].mi,
+    input[type=time].mi {
+      cursor: pointer;
+    }
+
+    .meta-gap {
+      flex: 1;
+    }
+
+    .del-btn {
+      background: none;
+      border: none;
+      font-family: var(--mono);
+      font-size: 10px;
+      color: var(--faint);
+      cursor: pointer;
+      padding: 4px 6px;
+      border-radius: var(--r);
+      transition: color 0.12s;
+    }
+
+    .del-btn:hover {
+      color: #b33;
+    }
+
+    /* title */
+    .title-wrap {
+      padding: 28px 44px 0;
+      flex-shrink: 0;
+    }
+
+    .title-inp {
+      width: 100%;
+      border: none;
+      background: transparent;
+      font-family: var(--serif);
+      font-size: 26px;
+      font-weight: 500;
+      color: var(--fg);
+      letter-spacing: -0.2px;
+      outline: none;
+      caret-color: var(--fg);
+      line-height: 1.3;
+    }
+
+    .title-inp::placeholder {
+      color: var(--faint);
+      font-style: italic;
+    }
+
+    /* scroller */
+    .scroller {
+      flex: 1;
+      overflow-y: auto;
+      padding: 18px 44px 48px;
+    }
+
+    .scroller::-webkit-scrollbar {
+      width: 4px;
+    }
+
+    .scroller::-webkit-scrollbar-thumb {
+      background: var(--faint);
+      border-radius: 2px;
+    }
+
+    .notes-lbl {
+      font-size: 9px;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      color: var(--faint);
+      margin-bottom: 10px;
+      margin-top: 22px;
+    }
+
+    /* ── TEXTAREA EDITOR ── */
+    .notes-editor {
+      min-height: 220px;
+    }
+
+    .notes-editable {
+      outline: none;
+      min-height: 220px;
+      font-family: var(--mono);
+      font-size: var(--font-sz);
+      line-height: 1.7;
+      color: var(--fg);
+      padding: 8px 0;
+    }
+
+    .notes-editable:empty::before {
+      content: attr(data-placeholder);
+      color: var(--faint);
+      font-style: italic;
+    }
+
+    .notes-editable ol {
+      list-style: none;
+      counter-reset: item;
+      padding: 0;
+      margin: 0;
+    }
+
+    .notes-editable li {
+      counter-increment: item;
+      margin-bottom: 8px;
+      padding-left: 32px;
+      position: relative;
+    }
+
+    .notes-editable li::before {
+      content: counter(item) ".";
+      position: absolute;
+      left: 0;
+      top: 0;
+      color: var(--muted);
+      font-weight: 400;
+      min-width: 24px;
+      text-align: right;
+    }
+
+    .notes-editable ul {
+      list-style: none;
+      margin: 4px 0 0 0;
+      padding: 0;
+    }
+
+    .notes-editable ul li {
+      counter-increment: none;
+      padding-left: 20px;
+      margin-bottom: 4px;
+    }
+
+    .notes-editable ul li::before {
+      content: "–";
+      left: 0;
+      min-width: 12px;
+    }
+
+    .inf-row {
+      position: relative;
+    }
+
+    .inf-row-done {
+      opacity: 0.5;
+    }
+
+    .inf-row-done .inf-txt {
+      text-decoration: line-through;
+    }
+
+    .inf-close-btn {
+      position: absolute;
+      right: 0;
+      top: 50%;
+      transform: translateY(-50%);
+      background: none;
+      border: 1px solid var(--faint);
+      border-radius: var(--r);
+      color: var(--muted);
+      font-size: 14px;
+      padding: 2px 6px;
+      cursor: pointer;
+      opacity: 0;
+      transition: opacity 0.15s, border-color 0.15s;
+    }
+
+    .inf-row:hover .inf-close-btn {
+      opacity: 1;
+    }
+
+    .inf-close-btn:hover {
+      border-color: var(--fg);
+      color: var(--fg);
+    }
+
+    .inf-done-note {
+      font-size: 10px;
+      color: var(--muted);
+      font-style: italic;
+      display: block;
+      margin-top: 2px;
+    }
+
+    .con-item {
+      position: relative;
+    }
+
+    .con-item-done {
+      opacity: 0.6;
+    }
+
+    .con-item-done .con-item-text {
+      text-decoration: line-through;
+    }
+
+    .con-close-btn {
+      position: absolute;
+      right: 8px;
+      top: 8px;
+      background: var(--bg);
+      border: 1px solid var(--faint);
+      border-radius: var(--r);
+      color: var(--muted);
+      font-size: 10px;
+      padding: 3px 8px;
+      cursor: pointer;
+      opacity: 0;
+      transition: opacity 0.15s, border-color 0.15s;
+    }
+
+    .con-item:hover .con-close-btn {
+      opacity: 1;
+    }
+
+    .con-close-btn:hover {
+      border-color: var(--fg);
+      color: var(--fg);
+    }
+
+    .con-item-done-note {
+      font-size: 10px;
+      color: var(--muted);
+      font-style: italic;
+      margin-top: 2px;
+    }
+
+    .dl-badge {
+      font-size: 10px;
+      padding: 1px 7px;
+      border-radius: 2px;
+      white-space: nowrap;
+      letter-spacing: 0.2px;
+      flex-shrink: 0;
+    }
+
+    .dl-overdue {
+      background: #fde8e8;
+      color: #b33;
+    }
+
+    .dl-today {
+      background: #fff3cd;
+      color: #c47a00;
+    }
+
+    .dl-upcoming {
+      background: #f0f0f0;
+      color: var(--muted);
+    }
+
+    .person-item {
+      padding: 12px 12px;
+      cursor: pointer;
+      border-bottom: 1px solid var(--faint);
+      transition: background 0.1s;
+    }
+
+    .person-item:hover {
+      background: #f8f8f8;
+    }
+
+    .person-item-active {
+      background: #f4f4f4;
+      position: relative;
+    }
+
+    .person-item-active::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 22%;
+      bottom: 22%;
+      width: 2px;
+      background: var(--fg);
+      border-radius: 2px;
+    }
+
+    .person-name {
+      font-size: 12px;
+      color: var(--fg);
+      margin-bottom: 3px;
+    }
+
+    .person-count {
+      font-size: 10px;
+      color: var(--muted);
+    }
+
+    .person-back {
+      padding: 10px 12px;
+      cursor: pointer;
+      border-bottom: 1px solid var(--faint);
+      font-size: 11px;
+      color: var(--muted);
+      transition: color 0.1s;
+    }
+
+    .person-back:hover {
+      color: var(--fg);
+    }
+
+    .person-header {
+      padding: 10px 12px;
+      border-bottom: 1px solid var(--faint);
+      font-size: 12px;
+      font-weight: 500;
+      background: #f8f8f8;
+    }
 
 
-/* Actions table in main frame */
-.actions-table-container {
-  flex: 1; overflow-y: auto; padding: 32px 44px;
-  display: none; /* hidden by default */
-}
-.actions-table-wrap { max-width: 1200px; margin: 0 auto; }
-.actions-table-header {
-  display: flex; align-items: baseline; justify-content: space-between;
-  margin-bottom: 24px;
-}
-.actions-table-header h2 {
-  font-family: var(--serif); font-size: 24px; font-weight: 500;
-  color: var(--fg); letter-spacing: -0.3px;
-}
-.actions-count {
-  font-family: var(--mono); font-size: 11px; color: var(--muted);
-  text-transform: uppercase; letter-spacing: 0.5px;
-}
+    /* Actions table in main frame */
+    .actions-table-container {
+      flex: 1;
+      overflow-y: auto;
+      padding: 32px 44px;
+      display: none;
+      /* hidden by default */
+    }
 
-.actions-table {
-  width: 100%; border-collapse: collapse;
-  font-family: var(--mono); font-size: 12px;
-}
-.actions-table thead {
-  border-bottom: 2px solid var(--faint);
-}
-.actions-table th {
-  text-align: left; padding: 10px 12px;
-  font-size: 10px; font-weight: 400; color: var(--muted);
-  text-transform: uppercase; letter-spacing: 0.8px;
-}
-.actions-table tbody tr {
-  border-bottom: 1px solid var(--faint);
-  cursor: pointer;
-  transition: background 0.1s;
-}
-.actions-table tbody tr:hover { background: #f8f8f8; }
-.actions-table tbody tr.row-done { opacity: 0.5; }
-.actions-table td {
-  padding: 12px;
-  vertical-align: middle;
-}
-.action-text {
-  color: var(--fg);
-  max-width: 400px;
-}
-.row-done .action-text { text-decoration: line-through; }
-.meeting-title { color: var(--muted); font-size: 11px; }
-.meeting-date { color: var(--muted); font-size: 11px; white-space: nowrap; }
-.status-open, .status-done { font-size: 11px; }
-.status-done { color: var(--muted); font-style: italic; }
-.table-close-btn {
-  background: var(--bg); border: 1px solid var(--faint);
-  border-radius: var(--r); padding: 4px 10px;
-  font-family: var(--mono); font-size: 10px;
-  color: var(--muted); cursor: pointer;
-  transition: border-color 0.12s, color 0.12s;
-}
-.table-close-btn:hover {
-  border-color: var(--fg); color: var(--fg);
-}
+    .actions-table-wrap {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
 
-/* hint */
-.hint { font-size: 10px; color: var(--faint); line-height: 1.9; margin-top: 6px; font-style: italic; }
-.hint b { color: var(--muted); font-style: normal; font-weight: 400; }
+    .actions-table-header {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      margin-bottom: 24px;
+    }
 
-/* per-note inferred panel */
-.inferred { margin-top: 32px; border-top: 1px solid var(--faint); padding-top: 22px; display: flex; flex-direction: column; gap: 22px; }
-.inf-sec { display: flex; flex-direction: column; }
-.inf-lbl { font-size: 9px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--muted); margin-bottom: 8px; }
-.inf-row { display: flex; align-items: baseline; gap: 12px; padding: 6px 0; border-bottom: 1px solid var(--faint); font-size: 12px; line-height: 1.5; }
-.inf-row:last-child { border-bottom: none; }
-.inf-who { font-size: 10px; color: var(--muted); white-space: nowrap; min-width: 72px; font-style: italic; }
-.inf-txt { color: var(--fg); flex: 1; }
+    .actions-table-header h2 {
+      font-family: var(--serif);
+      font-size: 24px;
+      font-weight: 500;
+      color: var(--fg);
+      letter-spacing: -0.3px;
+    }
 
-/* status bar */
-.statusbar {
-  padding: 5px 44px; border-top: 1px solid var(--faint);
-  font-size: 10px; color: var(--faint);
-  display: flex; gap: 12px; align-items: center;
-  flex-shrink: 0; letter-spacing: 0.2px;
-}
-.sdot { width: 5px; height: 5px; border-radius: 50%; background: #ccc; flex-shrink: 0; transition: background 0.3s; }
-.sdot.saved { background: #3a9a5c; }
-.sdot.dirty { background: #e8a838; }
+    .actions-count {
+      font-family: var(--mono);
+      font-size: 11px;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
 
-/* toast */
-.toast {
-  position: fixed; bottom: 18px; left: 50%;
-  transform: translateX(-50%) translateY(6px);
-  background: var(--fg); color: var(--bg);
-  padding: 6px 16px; border-radius: 20px;
-  font-size: 11px; opacity: 0;
-  transition: opacity 0.2s ease, transform 0.2s ease;
-  pointer-events: none; z-index: 99; letter-spacing: 0.3px;
-}
-.toast.on { opacity: 1; transform: translateX(-50%) translateY(0); }
+    .actions-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-family: var(--mono);
+      font-size: 12px;
+    }
 
-/* modal */
-.overlay {
-  position: fixed; inset: 0; background: rgba(28,28,28,0.3);
-  display: none; align-items: center; justify-content: center;
-  z-index: 50; backdrop-filter: blur(2px);
-}
-.overlay.open { display: flex; }
-.modal {
-  background: var(--bg); border: 1px solid var(--faint);
-  border-radius: var(--r); padding: 26px 30px;
-  width: 340px; max-width: 90vw;
-  box-shadow: 0 6px 24px rgba(0,0,0,0.09);
-}
-.modal h3 { font-family: var(--serif); font-size: 17px; font-weight: 500; margin-bottom: 7px; }
-.modal p { font-size: 11px; color: var(--muted); margin-bottom: 20px; line-height: 1.7; }
-.modal-btns { display: flex; gap: 8px; justify-content: flex-end; }
-.mb {
-  padding: 7px 16px; border-radius: var(--r);
-  font-family: var(--mono); font-size: 11px;
-  cursor: pointer; border: 1px solid var(--faint);
-  background: transparent; color: var(--muted);
-  transition: color 0.12s, border-color 0.12s;
-}
-.mb:hover { border-color: var(--fg); color: var(--fg); }
-.mb.p { background: var(--fg); color: var(--bg); border-color: var(--fg); }
-.mb.p:hover { opacity: 0.75; }
-</style>
+    .actions-table thead {
+      border-bottom: 2px solid var(--faint);
+    }
+
+    .actions-table th {
+      text-align: left;
+      padding: 10px 12px;
+      font-size: 10px;
+      font-weight: 400;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+    }
+
+    .actions-table tbody tr {
+      border-bottom: 1px solid var(--faint);
+      cursor: pointer;
+      transition: background 0.1s;
+    }
+
+    .actions-table tbody tr:hover {
+      background: #f8f8f8;
+    }
+
+    .actions-table tbody tr.row-done {
+      opacity: 0.5;
+    }
+
+    .actions-table td {
+      padding: 12px;
+      vertical-align: middle;
+    }
+
+    .action-text {
+      color: var(--fg);
+      max-width: 400px;
+    }
+
+    .row-done .action-text {
+      text-decoration: line-through;
+    }
+
+    .meeting-title {
+      color: var(--muted);
+      font-size: 11px;
+    }
+
+    .meeting-date {
+      color: var(--muted);
+      font-size: 11px;
+      white-space: nowrap;
+    }
+
+    .status-open,
+    .status-done {
+      font-size: 11px;
+    }
+
+    .status-done {
+      color: var(--muted);
+      font-style: italic;
+    }
+
+    .table-close-btn {
+      background: var(--bg);
+      border: 1px solid var(--faint);
+      border-radius: var(--r);
+      padding: 4px 10px;
+      font-family: var(--mono);
+      font-size: 10px;
+      color: var(--muted);
+      cursor: pointer;
+      transition: border-color 0.12s, color 0.12s;
+    }
+
+    .table-close-btn:hover {
+      border-color: var(--fg);
+      color: var(--fg);
+    }
+
+    /* hint */
+    .hint {
+      font-size: 10px;
+      color: var(--faint);
+      line-height: 1.9;
+      margin-top: 6px;
+      font-style: italic;
+    }
+
+    .hint b {
+      color: var(--muted);
+      font-style: normal;
+      font-weight: 400;
+    }
+
+    /* per-note inferred panel */
+    .inferred {
+      margin-top: 32px;
+      border-top: 1px solid var(--faint);
+      padding-top: 22px;
+      display: flex;
+      flex-direction: column;
+      gap: 22px;
+    }
+
+    .inf-sec {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .inf-lbl {
+      font-size: 9px;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 8px;
+    }
+
+    .inf-row {
+      display: flex;
+      align-items: baseline;
+      gap: 12px;
+      padding: 6px 0;
+      border-bottom: 1px solid var(--faint);
+      font-size: 12px;
+      line-height: 1.5;
+    }
+
+    .inf-row:last-child {
+      border-bottom: none;
+    }
+
+    .inf-who {
+      font-size: 10px;
+      color: var(--muted);
+      white-space: nowrap;
+      min-width: 72px;
+      font-style: italic;
+    }
+
+    .inf-txt {
+      color: var(--fg);
+      flex: 1;
+    }
+
+    /* status bar */
+    .statusbar {
+      padding: 5px 44px;
+      border-top: 1px solid var(--faint);
+      font-size: 10px;
+      color: var(--faint);
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      flex-shrink: 0;
+      letter-spacing: 0.2px;
+    }
+
+    .sdot {
+      width: 5px;
+      height: 5px;
+      border-radius: 50%;
+      background: #ccc;
+      flex-shrink: 0;
+      transition: background 0.3s;
+    }
+
+    .sdot.saved {
+      background: #3a9a5c;
+    }
+
+    .sdot.dirty {
+      background: #e8a838;
+    }
+
+    /* toast */
+    .toast {
+      position: fixed;
+      bottom: 18px;
+      left: 50%;
+      transform: translateX(-50%) translateY(6px);
+      background: var(--fg);
+      color: var(--bg);
+      padding: 6px 16px;
+      border-radius: 20px;
+      font-size: 11px;
+      opacity: 0;
+      transition: opacity 0.2s ease, transform 0.2s ease;
+      pointer-events: none;
+      z-index: 99;
+      letter-spacing: 0.3px;
+    }
+
+    .toast.on {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+
+    /* modal */
+    .overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(28, 28, 28, 0.3);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 50;
+      backdrop-filter: blur(2px);
+    }
+
+    .overlay.open {
+      display: flex;
+    }
+
+    .modal {
+      background: var(--bg);
+      border: 1px solid var(--faint);
+      border-radius: var(--r);
+      padding: 26px 30px;
+      width: 340px;
+      max-width: 90vw;
+      box-shadow: 0 6px 24px rgba(0, 0, 0, 0.09);
+    }
+
+    .modal h3 {
+      font-family: var(--serif);
+      font-size: 17px;
+      font-weight: 500;
+      margin-bottom: 7px;
+    }
+
+    .modal p {
+      font-size: 11px;
+      color: var(--muted);
+      margin-bottom: 20px;
+      line-height: 1.7;
+    }
+
+    .modal-btns {
+      display: flex;
+      gap: 8px;
+      justify-content: flex-end;
+    }
+
+    .mb {
+      padding: 7px 16px;
+      border-radius: var(--r);
+      font-family: var(--mono);
+      font-size: 11px;
+      cursor: pointer;
+      border: 1px solid var(--faint);
+      background: transparent;
+      color: var(--muted);
+      transition: color 0.12s, border-color 0.12s;
+    }
+
+    .mb:hover {
+      border-color: var(--fg);
+      color: var(--fg);
+    }
+
+    .mb.p {
+      background: var(--fg);
+      color: var(--bg);
+      border-color: var(--fg);
+    }
+
+    .mb.p:hover {
+      opacity: 0.75;
+    }
+  </style>
 </head>
+
 <body>
 
-<div class="shell">
+  <div class="shell">
 
-  <!-- RAIL -->
-  <nav class="rail">
-    <div class="rail-top">
-      <span class="wordmark">Minutes</span>
-      <button class="btn-new" onclick="app.newNote()">+ new meeting</button>
-    </div>
-    <div class="search-box">
-      <input type="text" id="search" placeholder="search…">
-    </div>
-    <div class="rail-tabs">
-      <button class="rail-tab active" data-tab="notes">Notes</button>
-      <button class="rail-tab" data-tab="actions">Actions</button>
-      <button class="rail-tab" data-tab="decisions">Decisions</button>
-    </div>
-
-    <div class="note-list visible" id="note-list"></div>
-
-    <div class="consolidated" id="con-actions">
-      <div class="con-filter">
-        <input type="text" id="filter-actions" placeholder="filter by person…">
+    <!-- RAIL -->
+    <nav class="rail">
+      <div class="rail-top">
+        <span class="wordmark">Minutes</span>
+        <button class="btn-new" onclick="app.newNote()">+ new meeting</button>
       </div>
-      <div class="con-list" id="list-actions">
-        <!-- Person list shown by default, detail view shown when person clicked -->
+      <div class="search-box">
+        <input type="text" id="search" placeholder="search…">
       </div>
-    </div>
-
-    <div class="consolidated" id="con-decisions">
-      <div class="con-filter">
-        <input type="text" id="filter-decisions" placeholder="filter decisions…">
-      </div>
-      <div class="con-list" id="list-decisions"></div>
-    </div>
-
-    <div class="rail-foot">
-      <button class="rb" onclick="app.exportData()">↑ export</button>
-      <button class="rb" onclick="document.getElementById('file-import').click()">↓ import</button>
-      <input type="file" id="file-import" class="file-import-hidden" accept=".json" onchange="app.importData(this)">
-    </div>
-  </nav>
-
-  <!-- MAIN -->
-  <main class="main">
-    <div class="empty" id="empty">select or create a meeting note</div>
-
-    <div class="editor" id="editor" style="display:none">
-      <div class="meta-bar">
-        <div class="mf">
-          <span class="ml">Date</span>
-          <input type="date" class="mi" id="f-date">
-        </div>
-        <div class="mf">
-          <span class="ml">Time</span>
-          <input type="time" class="mi" id="f-time">
-        </div>
-        <div class="mf">
-          <span class="ml">Category</span>
-          <input type="text" class="mi" id="f-cat" placeholder="sprint, 1:1…" style="width:120px">
-        </div>
-        <div class="meta-gap"></div>
-        <button class="del-btn" onclick="app.confirmDelete()">delete</button>
+      <div class="rail-tabs">
+        <button class="rail-tab active" data-tab="notes">Notes</button>
+        <button class="rail-tab" data-tab="actions">Actions</button>
+        <button class="rail-tab" data-tab="decisions">Decisions</button>
       </div>
 
-      <div class="title-wrap">
-        <input type="text" class="title-inp" id="f-title" placeholder="Meeting title">
+      <div class="note-list visible" id="note-list"></div>
+
+      <div class="consolidated" id="con-actions">
+        <div class="con-filter">
+          <input type="text" id="filter-actions" placeholder="filter by person…">
+        </div>
+        <div class="con-list" id="list-actions">
+          <!-- Person list shown by default, detail view shown when person clicked -->
+        </div>
       </div>
 
-      <div class="scroller">
-        <div class="notes-lbl">Notes</div>
-        <div class="notes-editor">
-          <div class="notes-editable" id="f-notes" contenteditable="true" spellcheck="true"></div>
+      <div class="consolidated" id="con-decisions">
+        <div class="con-filter">
+          <input type="text" id="filter-decisions" placeholder="filter decisions…">
         </div>
-        <div class="hint">
-          <b>Tab</b> indent &nbsp;·&nbsp; <b>Shift+Tab</b> outdent &nbsp;·&nbsp;
-          <b>@name task</b> → action &nbsp;·&nbsp; <b>→ text</b> or <b>** text</b> → decision &nbsp;·&nbsp; <b>!YYYY-MM-DD</b> → deadline
-        </div>
-        <div class="inferred" id="inferred" style="display:none">
-          <div class="inf-sec" id="act-sec" style="display:none">
-            <div class="inf-lbl">Actions</div>
-            <div id="act-list"></div>
+        <div class="con-list" id="list-decisions"></div>
+      </div>
+
+      <div class="rail-foot">
+        <button class="rb" onclick="app.exportData()">↑ export</button>
+        <button class="rb" onclick="document.getElementById('file-import').click()">↓ import</button>
+        <input type="file" id="file-import" class="file-import-hidden" accept=".json" onchange="app.importData(this)">
+      </div>
+    </nav>
+
+    <!-- MAIN -->
+    <main class="main">
+      <div class="empty" id="empty">select or create a meeting note</div>
+
+      <div class="editor" id="editor" style="display:none">
+        <div class="meta-bar">
+          <div class="mf">
+            <span class="ml">Date</span>
+            <input type="date" class="mi" id="f-date">
           </div>
-          <div class="inf-sec" id="dec-sec" style="display:none">
-            <div class="inf-lbl">Decisions</div>
-            <div id="dec-list"></div>
+          <div class="mf">
+            <span class="ml">Time</span>
+            <input type="time" class="mi" id="f-time">
+          </div>
+          <div class="mf">
+            <span class="ml">Category</span>
+            <input type="text" class="mi" id="f-cat" placeholder="sprint, 1:1…" style="width:120px">
+          </div>
+          <div class="meta-gap"></div>
+          <button class="del-btn" onclick="app.confirmDelete()">delete</button>
+        </div>
+
+        <div class="title-wrap">
+          <input type="text" class="title-inp" id="f-title" placeholder="Meeting title">
+        </div>
+
+        <div class="scroller">
+          <div class="notes-lbl">Notes</div>
+          <div class="notes-editor">
+            <div class="notes-editable" id="f-notes" contenteditable="true" spellcheck="true"></div>
+          </div>
+          <div class="hint">
+            <b>Tab</b> indent &nbsp;·&nbsp; <b>Shift+Tab</b> outdent &nbsp;·&nbsp;
+            <b>@name task</b> → action &nbsp;·&nbsp; <b>→ text</b> or <b>** text</b> → decision &nbsp;·&nbsp;
+            <b>!YYYY-MM-DD</b> → deadline
+          </div>
+          <div class="inferred" id="inferred" style="display:none">
+            <div class="inf-sec" id="act-sec" style="display:none">
+              <div class="inf-lbl">Actions</div>
+              <div id="act-list"></div>
+            </div>
+            <div class="inf-sec" id="dec-sec" style="display:none">
+              <div class="inf-lbl">Decisions</div>
+              <div id="dec-list"></div>
+            </div>
           </div>
         </div>
-      </div>
 
-      <div class="statusbar">
-        <div class="sdot" id="sdot"></div>
-        <span id="stxt">—</span>
+        <div class="statusbar">
+          <div class="sdot" id="sdot"></div>
+          <span id="stxt">—</span>
+        </div>
       </div>
-    </div>
-  </main>
-</div>
+    </main>
+  </div>
 
-<!-- delete modal -->
-<div class="overlay" id="del-modal">
-  <div class="modal">
-    <h3>Delete note?</h3>
-    <p>This cannot be undone.</p>
-    <div class="modal-btns">
-      <button class="mb" onclick="app.closeModal()">cancel</button>
-      <button class="mb p" onclick="app.doDelete()">delete</button>
+  <!-- delete modal -->
+  <div class="overlay" id="del-modal">
+    <div class="modal">
+      <h3>Delete note?</h3>
+      <p>This cannot be undone.</p>
+      <div class="modal-btns">
+        <button class="mb" onclick="app.closeModal()">cancel</button>
+        <button class="mb p" onclick="app.doDelete()">delete</button>
+      </div>
     </div>
   </div>
-</div>
 
-<div class="toast" id="toast"></div>
+  <div class="toast" id="toast"></div>
 
-<script>
-(function () {
-'use strict';
+  <script>
+    (function () {
+      'use strict';
 
-// ── DATA STORE ──
-// Shape: { meetings: { [id]: Meeting }, actions: Action[], decisions: Decision[] }
-//
-// Meeting:  { id, title, date, time, category, notes, createdAt, updatedAt }
-// Action:   { meetingId, meetingTitle, meetingDate, owners: string[], text }
-// Decision: { meetingId, meetingTitle, meetingDate, text }
-//
-// actions[] and decisions[] are denormalized — derived from meeting notes on
-// every save so the consolidated view reads directly without scanning all notes.
+      // ── DATA STORE ──
+      // Shape: { meetings: { [id]: Meeting }, actions: Action[], decisions: Decision[] }
+      //
+      // Meeting:  { id, title, date, time, category, notes, createdAt, updatedAt }
+      // Action:   { meetingId, meetingTitle, meetingDate, owners: string[], text }
+      // Decision: { meetingId, meetingTitle, meetingDate, text }
+      //
+      // actions[] and decisions[] are denormalized — derived from meeting notes on
+      // every save so the consolidated view reads directly without scanning all notes.
 
-const STORE_KEY = 'minutes_v1';
+      const STORE_KEY = 'minutes_v1';
 
-function loadData() {
-  try {
-    const raw = localStorage.getItem(STORE_KEY);
-    if (raw) return JSON.parse(raw);
-  } catch (e) { console.warn('load failed:', e); }
-  return { meetings: {}, actions: [], decisions: [] };
-}
+      function loadData() {
+        try {
+          const raw = localStorage.getItem(STORE_KEY);
+          if (raw) return JSON.parse(raw);
+        } catch (e) { console.warn('load failed:', e); }
+        return { meetings: {}, actions: [], decisions: [] };
+      }
 
-function saveData() {
-  try { localStorage.setItem(STORE_KEY, JSON.stringify(data)); }
-  catch (e) { console.warn('save failed:', e); }
-}
+      function saveData() {
+        try { localStorage.setItem(STORE_KEY, JSON.stringify(data)); }
+        catch (e) { console.warn('save failed:', e); }
+      }
 
-let data = loadData();
+      let data = loadData();
 
-function newId() { return Date.now().toString(36) + Math.random().toString(36).slice(2); }
+      function newId() { return Date.now().toString(36) + Math.random().toString(36).slice(2); }
 
-// Recompute denormalized actions/decisions for one meeting.
-// Removes stale entries for that meeting then re-inserts from current notes.
-function indexMeeting(meeting) {
-  data.actions   = data.actions.filter(a => a.meetingId !== meeting.id);
-  data.decisions = data.decisions.filter(d => d.meetingId !== meeting.id);
+      // Recompute denormalized actions/decisions for one meeting.
+      // Removes stale entries for that meeting then re-inserts from current notes.
+      function indexMeeting(meeting) {
+        data.actions = data.actions.filter(a => a.meetingId !== meeting.id);
+        data.decisions = data.decisions.filter(d => d.meetingId !== meeting.id);
 
-  for (const a of parseActions(meeting.notes || '')) {
-    data.actions.push({
-      meetingId: meeting.id,
-      meetingTitle: meeting.title || 'Untitled',
-      meetingDate: meeting.date || '',
-      owners: a.owners,
-      text: a.text,
-      fullText: a.fullText,
-      isDone: a.isDone,
-      doneNote: a.doneNote,
-      deadline: a.deadline,
-    });
-  }
-  for (const text of parseDecisions(meeting.notes || '')) {
-    data.decisions.push({
-      meetingId: meeting.id,
-      meetingTitle: meeting.title || 'Untitled',
-      meetingDate: meeting.date || '',
-      text,
-    });
-  }
-}
+        for (const a of parseActions(meeting.notes || '')) {
+          data.actions.push({
+            meetingId: meeting.id,
+            meetingTitle: meeting.title || 'Untitled',
+            meetingDate: meeting.date || '',
+            owners: a.owners,
+            text: a.text,
+            fullText: a.fullText,
+            isDone: a.isDone,
+            doneNote: a.doneNote,
+            deadline: a.deadline,
+          });
+        }
+        for (const text of parseDecisions(meeting.notes || '')) {
+          data.decisions.push({
+            meetingId: meeting.id,
+            meetingTitle: meeting.title || 'Untitled',
+            meetingDate: meeting.date || '',
+            text,
+          });
+        }
+      }
 
-// Remove all index entries for a meeting by id (used on delete)
-function clearIndex(id) {
-  data.actions   = data.actions.filter(a => a.meetingId !== id);
-  data.decisions = data.decisions.filter(d => d.meetingId !== id);
-}
+      // Remove all index entries for a meeting by id (used on delete)
+      function clearIndex(id) {
+        data.actions = data.actions.filter(a => a.meetingId !== id);
+        data.decisions = data.decisions.filter(d => d.meetingId !== id);
+      }
 
-// ── STATE ──
-let currentId = null, isDirty = false, toastTmr = null;
-let activeTab = 'notes';
+      // ── STATE ──
+      let currentId = null, isDirty = false, toastTmr = null;
+      let activeTab = 'notes';
 
-// ── DOM REFS ──
-const elNotes    = document.getElementById('f-notes');
-const elEmpty    = document.getElementById('empty');
-const elEditor   = document.getElementById('editor');
-const elSdot     = document.getElementById('sdot');
-const elStxt     = document.getElementById('stxt');
-const elList     = document.getElementById('note-list');
-const elDelModal = document.getElementById('del-modal');
-const elToast    = document.getElementById('toast');
-const elSearch   = document.getElementById('search');
-const elTitle    = document.getElementById('f-title');
-const elDate     = document.getElementById('f-date');
-const elTime     = document.getElementById('f-time');
-const elCat      = document.getElementById('f-cat');
-const elInferred        = document.getElementById('inferred');
-const elActSec          = document.getElementById('act-sec');
-const elDecSec          = document.getElementById('dec-sec');
-const elActList         = document.getElementById('act-list');
-const elDecList         = document.getElementById('dec-list');
-const elConActions      = document.getElementById('con-actions');
-const elConDecisions    = document.getElementById('con-decisions');
-const elListActions     = document.getElementById('list-actions');
-const elListDecisions   = document.getElementById('list-decisions');
-const elFilterActions   = document.getElementById('filter-actions');
-const elFilterDecisions = document.getElementById('filter-decisions');
+      // ── DOM REFS ──
+      const elNotes = document.getElementById('f-notes');
+      const elEmpty = document.getElementById('empty');
+      const elEditor = document.getElementById('editor');
+      const elSdot = document.getElementById('sdot');
+      const elStxt = document.getElementById('stxt');
+      const elList = document.getElementById('note-list');
+      const elDelModal = document.getElementById('del-modal');
+      const elToast = document.getElementById('toast');
+      const elSearch = document.getElementById('search');
+      const elTitle = document.getElementById('f-title');
+      const elDate = document.getElementById('f-date');
+      const elTime = document.getElementById('f-time');
+      const elCat = document.getElementById('f-cat');
+      const elInferred = document.getElementById('inferred');
+      const elActSec = document.getElementById('act-sec');
+      const elDecSec = document.getElementById('dec-sec');
+      const elActList = document.getElementById('act-list');
+      const elDecList = document.getElementById('dec-list');
+      const elConActions = document.getElementById('con-actions');
+      const elConDecisions = document.getElementById('con-decisions');
+      const elListActions = document.getElementById('list-actions');
+      const elListDecisions = document.getElementById('list-decisions');
+      const elFilterActions = document.getElementById('filter-actions');
+      const elFilterDecisions = document.getElementById('filter-decisions');
 
-// ── RAIL TABS ──
-document.querySelectorAll('.rail-tab').forEach(btn => {
-  btn.addEventListener('click', () => switchTab(btn.dataset.tab));
-});
+      // ── RAIL TABS ──
+      document.querySelectorAll('.rail-tab').forEach(btn => {
+        btn.addEventListener('click', () => switchTab(btn.dataset.tab));
+      });
 
-function switchTab(tab) {
-  activeTab = tab;
-  document.querySelectorAll('.rail-tab').forEach(b =>
-    b.classList.toggle('active', b.dataset.tab === tab)
-  );
-  elList.classList.toggle('visible', tab === 'notes');
-  elConActions.classList.toggle('visible', tab === 'actions');
-  elConDecisions.classList.toggle('visible', tab === 'decisions');
-  
-  // Hide table container when switching away from actions
-  const tableContainer = document.getElementById('actions-table-container');
-  if (tableContainer) {
-    tableContainer.style.display = (tab === 'actions' && actionsView.mode === 'detail') ? 'block' : 'none';
-  }
-  
-  // Show/hide editor and empty state based on tab
-  if (tab === 'notes') {
-    // Switching to notes - show editor if there's a currentId, otherwise show empty
-    if (currentId) {
-      elEditor.style.display = 'flex';
-      elEmpty.style.display = 'none';
-    } else {
-      elEditor.style.display = 'none';
-      elEmpty.style.display = 'flex';
-      elEmpty.textContent = 'select or create a meeting note';
-    }
-  }
-  
-  if (tab === 'actions')   renderConsolidated('actions');
-  if (tab === 'decisions') renderConsolidated('decisions');
-}
+      function switchTab(tab) {
+        activeTab = tab;
+        document.querySelectorAll('.rail-tab').forEach(b =>
+          b.classList.toggle('active', b.dataset.tab === tab)
+        );
+        elList.classList.toggle('visible', tab === 'notes');
+        elConActions.classList.toggle('visible', tab === 'actions');
+        elConDecisions.classList.toggle('visible', tab === 'decisions');
 
-// ── CONSOLIDATED VIEW ──
-// Render person list in Actions tab
-function renderActionsByPerson() {
-  const q = elFilterActions.value.toLowerCase();
-  
-  // Group actions by person
-  const byPerson = {};
-  for (const a of data.actions) {
-    for (const owner of a.owners) {
-      if (q && !owner.toLowerCase().includes(q)) continue;
-      if (!byPerson[owner]) byPerson[owner] = [];
-      byPerson[owner].push(a);
-    }
-  }
-  
-  const people = Object.keys(byPerson).sort((a, b) => a.toLowerCase().localeCompare(b.toLowerCase()));
-  
-  if (!people.length) {
-    elListActions.innerHTML = '<div class="list-empty">no actions yet</div>';
-    return;
-  }
-  
-  const today = new Date().toISOString().slice(0, 10);
-  elListActions.innerHTML = people.map(person => {
-    const actions = byPerson[person];
-    const openCount = actions.filter(a => !a.isDone).length;
-    const doneCount = actions.filter(a => a.isDone).length;
-    const overdueCount = actions.filter(a => !a.isDone && a.deadline && a.deadline < today).length;
-    const isSelected = actionsView.mode === 'detail' && actionsView.selectedPerson === person;
-    const overdueTag = overdueCount ? ` &nbsp;<span class="dl-badge dl-overdue">${overdueCount} overdue</span>` : '';
-    return `
+        // Hide table container when switching away from actions
+        const tableContainer = document.getElementById('actions-table-container');
+        if (tableContainer) {
+          tableContainer.style.display = (tab === 'actions' && actionsView.mode === 'detail') ? 'block' : 'none';
+        }
+
+        // Show/hide editor and empty state based on tab
+        if (tab === 'notes') {
+          // Switching to notes - show editor if there's a currentId, otherwise show empty
+          if (currentId) {
+            elEditor.style.display = 'flex';
+            elEmpty.style.display = 'none';
+          } else {
+            elEditor.style.display = 'none';
+            elEmpty.style.display = 'flex';
+            elEmpty.textContent = 'select or create a meeting note';
+          }
+        }
+
+        if (tab === 'actions') renderConsolidated('actions');
+        if (tab === 'decisions') renderConsolidated('decisions');
+      }
+
+      // ── CONSOLIDATED VIEW ──
+      // Render person list in Actions tab
+      function renderActionsByPerson() {
+        const q = elFilterActions.value.toLowerCase();
+
+        // Group actions by person
+        const byPerson = {};
+        for (const a of data.actions) {
+          for (const owner of a.owners) {
+            if (q && !owner.toLowerCase().includes(q)) continue;
+            if (!byPerson[owner]) byPerson[owner] = [];
+            byPerson[owner].push(a);
+          }
+        }
+
+        const people = Object.keys(byPerson).sort((a, b) => a.toLowerCase().localeCompare(b.toLowerCase()));
+
+        if (!people.length) {
+          elListActions.innerHTML = '<div class="list-empty">no actions yet</div>';
+          return;
+        }
+
+        const today = new Date().toISOString().slice(0, 10);
+        elListActions.innerHTML = people.map(person => {
+          const actions = byPerson[person];
+          const openCount = actions.filter(a => !a.isDone).length;
+          const doneCount = actions.filter(a => a.isDone).length;
+          const overdueCount = actions.filter(a => !a.isDone && a.deadline && a.deadline < today).length;
+          const isSelected = actionsView.mode === 'detail' && actionsView.selectedPerson === person;
+          const overdueTag = overdueCount ? ` &nbsp;<span class="dl-badge dl-overdue">${overdueCount} overdue</span>` : '';
+          return `
       <div class="person-item${isSelected ? ' person-item-active' : ''}" onclick="app.showPersonActions('${esc(person)}')">
         <div class="person-name">@${esc(person)}</div>
         <div class="person-count">${openCount} open${overdueTag}${doneCount ? `, ${doneCount} done` : ''}</div>
       </div>`;
-  }).join('');
-}
+        }).join('');
+      }
 
-// Render action list for a specific person - show sidebar + main table
-function renderActionsForPerson(person) {
-  const q = elFilterActions.value.toLowerCase();
-  const actions = data.actions
-    .filter(a => a.owners.includes(person) && (!q || a.text.toLowerCase().includes(q)))
-    .sort((a, b) => (b.meetingDate || '').localeCompare(a.meetingDate || ''));
-  
-  // Keep showing the full person list in the sidebar, but highlight the selected person
-  // The renderActionsByPerson function will handle this by checking actionsView.selectedPerson
-  
-  // Show table in main frame
-  if (!actions.length) {
-    elEmpty.style.display = 'flex';
-    elEmpty.textContent = 'No actions for @' + person;
-    elEditor.style.display = 'none';
-    return;
-  }
-  
-  elEmpty.style.display = 'none';
-  elEditor.style.display = 'none';
-  
-  // Show table
-  let tableHTML = `
+      // Render action list for a specific person - show sidebar + main table
+      function renderActionsForPerson(person) {
+        const q = elFilterActions.value.toLowerCase();
+        const actions = data.actions
+          .filter(a => a.owners.includes(person) && (!q || a.text.toLowerCase().includes(q)))
+          .sort((a, b) => (b.meetingDate || '').localeCompare(a.meetingDate || ''));
+
+        // Keep showing the full person list in the sidebar, but highlight the selected person
+        // The renderActionsByPerson function will handle this by checking actionsView.selectedPerson
+
+        // Show table in main frame
+        if (!actions.length) {
+          elEmpty.style.display = 'flex';
+          elEmpty.textContent = 'No actions for @' + person;
+          elEditor.style.display = 'none';
+          return;
+        }
+
+        elEmpty.style.display = 'none';
+        elEditor.style.display = 'none';
+
+        // Show table
+        let tableHTML = `
     <div class="actions-table-wrap">
       <div class="actions-table-header">
         <h2>Actions for @${esc(person)}</h2>
@@ -719,12 +1338,12 @@ function renderActionsForPerson(person) {
         <tbody>
   `;
 
-  for (const a of actions) {
-    const statusCell = a.isDone
-      ? `<td class="status-done">${esc(a.doneNote)}</td>`
-      : `<td class="status-open"><button class="table-close-btn" data-action="${esc(JSON.stringify(a))}" onclick="app.closeActionFromTable(this, '${a.meetingId}')">Mark done</button></td>`;
+        for (const a of actions) {
+          const statusCell = a.isDone
+            ? `<td class="status-done">${esc(a.doneNote)}</td>`
+            : `<td class="status-open"><button class="table-close-btn" data-action="${esc(JSON.stringify(a))}" onclick="app.closeActionFromTable(this, '${a.meetingId}')">Mark done</button></td>`;
 
-    tableHTML += `
+          tableHTML += `
       <tr class="${a.isDone ? 'row-done' : ''}" onclick="app.openNote('${a.meetingId}', true)">
         <td class="action-text">${esc(a.text)}</td>
         <td>${deadlineBadge(a.deadline)}</td>
@@ -733,45 +1352,45 @@ function renderActionsForPerson(person) {
         ${statusCell}
       </tr>
     `;
-  }
-  
-  tableHTML += `
+        }
+
+        tableHTML += `
         </tbody>
       </table>
     </div>
   `;
-  
-  // Insert table into main area (after .editor)
-  const main = document.querySelector('.main');
-  let tableContainer = document.getElementById('actions-table-container');
-  if (!tableContainer) {
-    tableContainer = document.createElement('div');
-    tableContainer.id = 'actions-table-container';
-    tableContainer.className = 'actions-table-container';
-    main.appendChild(tableContainer);
-  }
-  tableContainer.innerHTML = tableHTML;
-  tableContainer.style.display = 'block';
-}
 
-// Track current view state for actions tab
-let actionsView = { mode: 'list', selectedPerson: null };
+        // Insert table into main area (after .editor)
+        const main = document.querySelector('.main');
+        let tableContainer = document.getElementById('actions-table-container');
+        if (!tableContainer) {
+          tableContainer = document.createElement('div');
+          tableContainer.id = 'actions-table-container';
+          tableContainer.className = 'actions-table-container';
+          main.appendChild(tableContainer);
+        }
+        tableContainer.innerHTML = tableHTML;
+        tableContainer.style.display = 'block';
+      }
 
-function renderConsolidated(type) {
-  if (type === 'actions') {
-    if (actionsView.mode === 'list') {
-      renderActionsByPerson();
-    } else {
-      renderActionsForPerson(actionsView.selectedPerson);
-    }
-  } else {
-    const q = elFilterDecisions.value.toLowerCase();
-    const items = data.decisions
-      .filter(d => !q || d.text.toLowerCase().includes(q))
-      .sort((a, b) => (b.meetingDate || '').localeCompare(a.meetingDate || ''));
+      // Track current view state for actions tab
+      let actionsView = { mode: 'list', selectedPerson: null };
 
-    elListDecisions.innerHTML = items.length
-      ? items.map(d => `
+      function renderConsolidated(type) {
+        if (type === 'actions') {
+          if (actionsView.mode === 'list') {
+            renderActionsByPerson();
+          } else {
+            renderActionsForPerson(actionsView.selectedPerson);
+          }
+        } else {
+          const q = elFilterDecisions.value.toLowerCase();
+          const items = data.decisions
+            .filter(d => !q || d.text.toLowerCase().includes(q))
+            .sort((a, b) => (b.meetingDate || '').localeCompare(a.meetingDate || ''));
+
+          elListDecisions.innerHTML = items.length
+            ? items.map(d => `
           <div class="con-item" onclick="app.openNote('${d.meetingId}', true)">
             <div class="con-item-text">${esc(d.text)}</div>
             <div class="con-item-meta">
@@ -779,633 +1398,632 @@ function renderConsolidated(type) {
               ${d.meetingTitle ? ` · ${esc(d.meetingTitle)}` : ''}
             </div>
           </div>`).join('')
-      : '<div class="list-empty">no decisions yet</div>';
-  }
-}
-
-elFilterActions.addEventListener('input', () => {
-  if (actionsView.mode === 'list') renderActionsByPerson();
-  else renderActionsForPerson(actionsView.selectedPerson);
-});
-elFilterDecisions.addEventListener('input', () => renderConsolidated('decisions'));
-
-// Input event listener is already set up in the contenteditable keyboard handlers section
-
-function onNotesChange(text) {
-
-  const actions   = parseActions(text);
-  const decisions = parseDecisions(text);
-  updateInferred(actions, decisions);
-  updateStatusBar(elDate.value, actions, decisions);
-  markDirty(text);
-}
-
-
-// ── CONTENTEDITABLE HELPERS ──
-// Convert plain text (with \n and \t) to HTML list structure
-function textToHTML(text) {
-  if (!text.trim()) return '';
-
-  const items = text.split('\n')
-    .map(line => ({
-      depth: (line.match(/^\t+/) || [''])[0].length,
-      content: line.replace(/^\t+/, '').trim(),
-    }))
-    .filter(item => item.content);
-
-  if (!items.length) return '';
-
-  // Recursively build nested list HTML.
-  // Children of a node at depth D are the consecutive items at depth D+1
-  // that appear before the next item at depth <= D.
-  function buildList(items, depth, tag) {
-    let html = `<${tag}>`;
-    let i = 0;
-    while (i < items.length) {
-      if (items[i].depth !== depth) { i++; continue; }
-      html += `<li>${esc(items[i].content)}`;
-      // Collect all items between this one and the next peer/ancestor
-      const children = [];
-      let j = i + 1;
-      while (j < items.length && items[j].depth > depth) {
-        children.push(items[j]);
-        j++;
-      }
-      if (children.length) html += buildList(children, depth + 1, 'ul');
-      html += '</li>';
-      i = j;
-    }
-    html += `</${tag}>`;
-    return html;
-  }
-
-  return buildList(items, 0, 'ol');
-}
-
-// Convert HTML list structure back to plain text
-function htmlToText(html) {
-  const temp = document.createElement('div');
-  temp.innerHTML = html;
-  
-  const lines = [];
-  const processNode = (node, indent = '') => {
-    if (node.nodeType === Node.TEXT_NODE) {
-      const text = node.textContent.trim();
-      if (text) lines.push(indent + text);
-    } else if (node.tagName === 'LI') {
-      let text = '';
-      for (const child of node.childNodes) {
-        if (child.nodeType === Node.TEXT_NODE) {
-          text += child.textContent;
-        } else if (child.tagName === 'BR') {
-          text += '\n';
-        } else if (child.tagName !== 'UL' && child.tagName !== 'OL') {
-          text += child.textContent;
+            : '<div class="list-empty">no decisions yet</div>';
         }
       }
-      const trimmed = text.trim();
-      if (trimmed) lines.push(indent + trimmed);
-      
-      // Process nested lists
-      for (const child of node.childNodes) {
-        if (child.tagName === 'UL' || child.tagName === 'OL') {
-          processNode(child, indent + '\t');
-        }
-      }
-    } else {
-      for (const child of node.childNodes) {
-        processNode(child, indent);
-      }
-    }
-  };
-  
-  processNode(temp, '');
-  return lines.join('\n');
-}
 
-// ── CONTENTEDITABLE KEYBOARD HANDLERS ──
-elNotes.addEventListener('keydown', e => {
-  // Handle Enter: create new <li> at same nesting level
-  if (e.key === 'Enter') {
-    e.preventDefault();
-    const sel = window.getSelection();
-    const range = sel.getRangeAt(0);
-    const currentLi = range.startContainer.nodeType === Node.TEXT_NODE
-      ? range.startContainer.parentElement.closest('li')
-      : range.startContainer.closest('li');
-    
-    if (currentLi) {
-      const newLi = document.createElement('li');
-      newLi.innerHTML = '<br>'; // Placeholder for empty li
-      currentLi.parentElement.insertBefore(newLi, currentLi.nextSibling);
-      
-      // Move cursor to new li
-      const newRange = document.createRange();
-      newRange.setStart(newLi, 0);
-      newRange.collapse(true);
-      sel.removeAllRanges();
-      sel.addRange(newRange);
-      
-      elNotes.dispatchEvent(new Event('input'));
-    }
-  }
-  
-  // Handle Tab: indent (create sublist)
-  if (e.key === 'Tab') {
-    e.preventDefault();
-    const sel = window.getSelection();
-    const currentLi = sel.anchorNode.nodeType === Node.TEXT_NODE
-      ? sel.anchorNode.parentElement.closest('li')
-      : sel.anchorNode.closest('li');
-    
-    if (!currentLi) return;
-    
-    if (e.shiftKey) {
-      // Shift+Tab: outdent
-      if (currentLi.parentElement.tagName === 'UL') {
-        const ul = currentLi.parentElement;
-        const parentLi = ul.parentElement;
-        if (parentLi && parentLi.tagName === 'LI') {
-          parentLi.parentElement.insertBefore(currentLi, parentLi.nextSibling);
-          if (ul.children.length === 0) ul.remove();
-          elNotes.dispatchEvent(new Event('input'));
-        }
-      }
-    } else {
-      // Tab: indent
-      const prevLi = currentLi.previousElementSibling;
-      if (prevLi && prevLi.tagName === 'LI') {
-        let ul = prevLi.querySelector('ul');
-        if (!ul) {
-          ul = document.createElement('ul');
-          prevLi.appendChild(ul);
-        }
-        ul.appendChild(currentLi);
-        elNotes.dispatchEvent(new Event('input'));
-      }
-    }
-  }
-});
-
-elNotes.addEventListener('input', () => onNotesChange(htmlToText(elNotes.innerHTML)));
-
-// ── PARSE ──
-function parseActions(text) {
-  const out = [];
-  for (const raw of text.split('\n')) {
-    const line = raw.replace(/^\t+/, '').trim();
-    if (!line) continue;
-    const mentions = [...line.matchAll(/@([a-zA-Z0-9_.+-]+)/g)];
-    if (!mentions.length) continue;
-    
-    // Keep full text (with @mentions intact) for display
-    let fullText = line.replace(/^[→\-\*\d.]+\s*/, '').replace(/\s+/g, ' ').trim();
-
-    // Extract deadline marker: !YYYY-MM-DD
-    const deadlineMatch = fullText.match(/!(\d{4}-\d{2}-\d{2})/);
-    const deadline = deadlineMatch ? deadlineMatch[1] : null;
-
-    // Check for completion marker: [done: ...] or [closed: ...]
-    const doneMatch = fullText.match(/\[(done|closed):\s*(.+?)\]\s*$/i);
-    const isDone = !!doneMatch;
-    const doneNote = doneMatch ? doneMatch[2].trim() : '';
-
-    // Strip markers from display text
-    let displayText = isDone ? fullText.replace(/\[(done|closed):.+?\]\s*$/i, '').trim() : fullText;
-    displayText = displayText.replace(/!\d{4}-\d{2}-\d{2}/g, '').replace(/\s+/g, ' ').trim();
-
-    if (displayText) {
-      out.push({
-        owners: mentions.map(m => m[1]),
-        text: displayText,
-        fullText: fullText,  // original with marker intact
-        isDone,
-        doneNote,
-        deadline,
+      elFilterActions.addEventListener('input', () => {
+        if (actionsView.mode === 'list') renderActionsByPerson();
+        else renderActionsForPerson(actionsView.selectedPerson);
       });
-    }
-  }
-  return out;
-}
+      elFilterDecisions.addEventListener('input', () => renderConsolidated('decisions'));
 
-function parseDecisions(text) {
-  const out = [];
-  for (const raw of text.split('\n')) {
-    const line = raw.replace(/^\t+/, '').trim();
-    if (!line) continue;
-    if (/^(→|>>|\*\*|decided:|decision:)/i.test(line)) {
-      const clean = line.replace(/^(→|>>|\*\*|decided:|decision:)/i, '').replace(/\*\*$/, '').trim();
-      if (clean) out.push(clean);
-    }
-  }
-  return out;
-}
+      // Input event listener is already set up in the contenteditable keyboard handlers section
 
-// Update per-note inferred panel from pre-parsed results
-function updateInferred(actions, decisions) {
-  if (actions.length) {
-    // Sort by first owner name for consistent display
-    const sorted = actions.slice().sort((a, b) => {
-      const ownerA = (a.owners[0] || '').toLowerCase();
-      const ownerB = (b.owners[0] || '').toLowerCase();
-      return ownerA.localeCompare(ownerB);
-    });
-    elActList.innerHTML = sorted.map(a =>
-      `<div class="inf-row${a.isDone ? ' inf-row-done' : ''}">
+      function onNotesChange(text) {
+
+        const actions = parseActions(text);
+        const decisions = parseDecisions(text);
+        updateInferred(actions, decisions);
+        updateStatusBar(elDate.value, actions, decisions);
+        markDirty(text);
+      }
+
+
+      // ── CONTENTEDITABLE HELPERS ──
+      // Convert plain text (with \n and \t) to HTML list structure
+      function textToHTML(text) {
+        if (!text.trim()) return '';
+
+        const items = text.split('\n')
+          .map(line => ({
+            depth: (line.match(/^\t+/) || [''])[0].length,
+            content: line.replace(/^\t+/, '').trim(),
+          }))
+          .filter(item => item.content);
+
+        if (!items.length) return '';
+
+        // Recursively build nested list HTML.
+        // Children of a node at depth D are the consecutive items at depth D+1
+        // that appear before the next item at depth <= D.
+        function buildList(items, depth, tag) {
+          let html = `<${tag}>`;
+          let i = 0;
+          while (i < items.length) {
+            if (items[i].depth !== depth) { i++; continue; }
+            html += `<li>${esc(items[i].content)}`;
+            // Collect all items between this one and the next peer/ancestor
+            const children = [];
+            let j = i + 1;
+            while (j < items.length && items[j].depth > depth) {
+              children.push(items[j]);
+              j++;
+            }
+            if (children.length) html += buildList(children, depth + 1, 'ul');
+            html += '</li>';
+            i = j;
+          }
+          html += `</${tag}>`;
+          return html;
+        }
+
+        return buildList(items, 0, 'ol');
+      }
+
+      // Convert HTML list structure back to plain text
+      function htmlToText(html) {
+        const temp = document.createElement('div');
+        temp.innerHTML = html;
+
+        const lines = [];
+        const processNode = (node, indent = '') => {
+          if (node.nodeType === Node.TEXT_NODE) {
+            const text = node.textContent.trim();
+            if (text) lines.push(indent + text);
+          } else if (node.tagName === 'LI') {
+            let text = '';
+            for (const child of node.childNodes) {
+              if (child.nodeType === Node.TEXT_NODE) {
+                text += child.textContent;
+              } else if (child.tagName === 'BR') {
+                text += '\n';
+              } else if (child.tagName !== 'UL' && child.tagName !== 'OL') {
+                text += child.textContent;
+              }
+            }
+            const trimmed = text.trim();
+            if (trimmed) lines.push(indent + trimmed);
+
+            // Process nested lists
+            for (const child of node.childNodes) {
+              if (child.tagName === 'UL' || child.tagName === 'OL') {
+                processNode(child, indent + '\t');
+              }
+            }
+          } else {
+            for (const child of node.childNodes) {
+              processNode(child, indent);
+            }
+          }
+        };
+
+        processNode(temp, '');
+        return lines.join('\n');
+      }
+
+      // ── CONTENTEDITABLE KEYBOARD HANDLERS ──
+      elNotes.addEventListener('keydown', e => {
+        // Handle Enter: create new <li> at same nesting level
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          const sel = window.getSelection();
+          const range = sel.getRangeAt(0);
+          const currentLi = range.startContainer.nodeType === Node.TEXT_NODE
+            ? range.startContainer.parentElement.closest('li')
+            : range.startContainer.closest('li');
+
+          if (currentLi) {
+            const newLi = document.createElement('li');
+            newLi.innerHTML = '<br>'; // Placeholder for empty li
+            currentLi.parentElement.insertBefore(newLi, currentLi.nextSibling);
+
+            // Move cursor to new li
+            const newRange = document.createRange();
+            newRange.setStart(newLi, 0);
+            newRange.collapse(true);
+            sel.removeAllRanges();
+            sel.addRange(newRange);
+
+            elNotes.dispatchEvent(new Event('input'));
+          }
+        }
+
+        // Handle Tab: indent (create sublist)
+        if (e.key === 'Tab') {
+          e.preventDefault();
+          const sel = window.getSelection();
+          const currentLi = sel.anchorNode.nodeType === Node.TEXT_NODE
+            ? sel.anchorNode.parentElement.closest('li')
+            : sel.anchorNode.closest('li');
+
+          if (!currentLi) return;
+
+          if (e.shiftKey) {
+            // Shift+Tab: outdent
+            if (currentLi.parentElement.tagName === 'UL') {
+              const ul = currentLi.parentElement;
+              const parentLi = ul.parentElement;
+              if (parentLi && parentLi.tagName === 'LI') {
+                parentLi.parentElement.insertBefore(currentLi, parentLi.nextSibling);
+                if (ul.children.length === 0) ul.remove();
+                elNotes.dispatchEvent(new Event('input'));
+              }
+            }
+          } else {
+            // Tab: indent
+            const prevLi = currentLi.previousElementSibling;
+            if (prevLi && prevLi.tagName === 'LI') {
+              let ul = prevLi.querySelector('ul');
+              if (!ul) {
+                ul = document.createElement('ul');
+                prevLi.appendChild(ul);
+              }
+              ul.appendChild(currentLi);
+              elNotes.dispatchEvent(new Event('input'));
+            }
+          }
+        }
+      });
+
+      elNotes.addEventListener('input', () => onNotesChange(htmlToText(elNotes.innerHTML)));
+
+      // ── PARSE ──
+      function parseActions(text) {
+        const out = [];
+        for (const raw of text.split('\n')) {
+          const line = raw.replace(/^\t+/, '').trim();
+          if (!line) continue;
+          const mentions = [...line.matchAll(/@([a-zA-Z0-9_.+-]+)/g)];
+          if (!mentions.length) continue;
+
+          // Keep full text (with @mentions intact) for display
+          let fullText = line.replace(/^[→\-\*\d.]+\s*/, '').replace(/\s+/g, ' ').trim();
+
+          // Extract deadline marker: !YYYY-MM-DD
+          const deadlineMatch = fullText.match(/!(\d{4}-\d{2}-\d{2})/);
+          const deadline = deadlineMatch ? deadlineMatch[1] : null;
+
+          // Check for completion marker: [done: ...] or [closed: ...]
+          const doneMatch = fullText.match(/\[(done|closed):\s*(.+?)\]\s*$/i);
+          const isDone = !!doneMatch;
+          const doneNote = doneMatch ? doneMatch[2].trim() : '';
+
+          // Strip markers from display text
+          let displayText = isDone ? fullText.replace(/\[(done|closed):.+?\]\s*$/i, '').trim() : fullText;
+          displayText = displayText.replace(/!\d{4}-\d{2}-\d{2}/g, '').replace(/\s+/g, ' ').trim();
+
+          if (displayText) {
+            out.push({
+              owners: mentions.map(m => m[1]),
+              text: displayText,
+              fullText: fullText,  // original with marker intact
+              isDone,
+              doneNote,
+              deadline,
+            });
+          }
+        }
+        return out;
+      }
+
+      function parseDecisions(text) {
+        const out = [];
+        for (const raw of text.split('\n')) {
+          const line = raw.replace(/^\t+/, '').trim();
+          if (!line) continue;
+          if (/^(→|>>|\*\*|decided:|decision:)/i.test(line)) {
+            const clean = line.replace(/^(→|>>|\*\*|decided:|decision:)/i, '').replace(/\*\*$/, '').trim();
+            if (clean) out.push(clean);
+          }
+        }
+        return out;
+      }
+
+      // Update per-note inferred panel from pre-parsed results
+      function updateInferred(actions, decisions) {
+        if (actions.length) {
+          // Sort by first owner name for consistent display
+          const sorted = actions.slice().sort((a, b) => {
+            const ownerA = (a.owners[0] || '').toLowerCase();
+            const ownerB = (b.owners[0] || '').toLowerCase();
+            return ownerA.localeCompare(ownerB);
+          });
+          elActList.innerHTML = sorted.map(a =>
+            `<div class="inf-row${a.isDone ? ' inf-row-done' : ''}">
         <span class="inf-who">${a.owners.map(o => '@' + o).join(', ')}</span>
         <span class="inf-txt">${esc(a.text)}</span>
         ${a.deadline ? deadlineBadge(a.deadline) : ''}
-        <span class="inf-who">${a.owners.join(', ')}</span>
-        <span class="inf-txt">${esc(a.text.replace(/@/g, ''))}</span>
         ${a.isDone
-          ? `<span class="inf-done-note">${esc(a.doneNote)}</span>`
-          : `<button class="inf-close-btn" onclick="app.closeAction(this)" data-fulltext="${esc(a.fullText)}" title="Mark done">✓</button>`
-        }
+              ? `<span class="inf-done-note">${esc(a.doneNote)}</span>`
+              : `<button class="inf-close-btn" onclick="app.closeAction(this)" data-fulltext="${esc(a.fullText)}" title="Mark done">✓</button>`
+            }
       </div>`).join('');
-    elActSec.style.display = '';
-  } else {
-    elActSec.style.display = 'none';
-  }
+          elActSec.style.display = '';
+        } else {
+          elActSec.style.display = 'none';
+        }
 
-  if (decisions.length) {
-    elDecList.innerHTML = decisions.map(d =>
-      `<div class="inf-row"><span class="inf-txt">${esc(d)}</span></div>`).join('');
-    elDecSec.style.display = '';
-  } else {
-    elDecSec.style.display = 'none';
-  }
+        if (decisions.length) {
+          elDecList.innerHTML = decisions.map(d =>
+            `<div class="inf-row"><span class="inf-txt">${esc(d)}</span></div>`).join('');
+          elDecSec.style.display = '';
+        } else {
+          elDecSec.style.display = 'none';
+        }
 
-  elInferred.style.display = (actions.length || decisions.length) ? '' : 'none';
-}
+        elInferred.style.display = (actions.length || decisions.length) ? '' : 'none';
+      }
 
-// ── SIDEBAR NOTE LIST ──
-function renderList() {
-  const q = elSearch.value.toLowerCase();
-  let meetings = Object.values(data.meetings)
-    .sort((a, b) => (b.updatedAt || '').localeCompare(a.updatedAt || ''));
+      // ── SIDEBAR NOTE LIST ──
+      function renderList() {
+        const q = elSearch.value.toLowerCase();
+        let meetings = Object.values(data.meetings)
+          .sort((a, b) => (b.updatedAt || '').localeCompare(a.updatedAt || ''));
 
-  if (q) meetings = meetings.filter(m =>
-    (m.title    || '').toLowerCase().includes(q) ||
-    (m.notes    || '').toLowerCase().includes(q) ||
-    (m.category || '').toLowerCase().includes(q)
-  );
+        if (q) meetings = meetings.filter(m =>
+          (m.title || '').toLowerCase().includes(q) ||
+          (m.notes || '').toLowerCase().includes(q) ||
+          (m.category || '').toLowerCase().includes(q)
+        );
 
-  if (!meetings.length) {
-    elList.innerHTML = `<div class="list-empty">${q ? 'no results' : 'no notes yet'}</div>`;
-    return;
-  }
-  elList.innerHTML = meetings.map(m => {
-    const sub = [m.date ? fmtDate(m.date) : '', m.category || ''].filter(Boolean).join(' · ');
-    return `<div class="ni${m.id === currentId ? ' active' : ''}" onclick="app.openNote('${m.id}')">
+        if (!meetings.length) {
+          elList.innerHTML = `<div class="list-empty">${q ? 'no results' : 'no notes yet'}</div>`;
+          return;
+        }
+        elList.innerHTML = meetings.map(m => {
+          const sub = [m.date ? fmtDate(m.date) : '', m.category || ''].filter(Boolean).join(' · ');
+          return `<div class="ni${m.id === currentId ? ' active' : ''}" onclick="app.openNote('${m.id}')">
       <div class="ni-title">${esc(m.title || 'Untitled')}</div>
       ${sub ? `<div class="ni-sub">${esc(sub)}</div>` : ''}
     </div>`;
-  }).join('');
-}
+        }).join('');
+      }
 
-// ── OPEN / NEW / SAVE / DELETE ──
-function openNote(id, keepTab = false) {
-  clearTimeout(noteTimer.t); clearTimeout(metaTimer.t);
-  // Fix 4: flush both save paths so no changes are lost on note switch
-  if (isDirty && currentId) { saveMeta(); saveNote(htmlToText(elNotes.innerHTML)); }
+      // ── OPEN / NEW / SAVE / DELETE ──
+      function openNote(id, keepTab = false) {
+        clearTimeout(noteTimer.t); clearTimeout(metaTimer.t);
+        // Fix 4: flush both save paths so no changes are lost on note switch
+        if (isDirty && currentId) { saveMeta(); saveNote(htmlToText(elNotes.innerHTML)); }
 
-  // Fix 7: set currentId before switchTab so any reads during tab switch see the new id
-  currentId = id;
+        // Fix 7: set currentId before switchTab so any reads during tab switch see the new id
+        currentId = id;
 
-  // Switch to notes tab unless keepTab is true (e.g. when peeking from Actions tab)
-  if (!keepTab && activeTab !== 'notes') switchTab('notes');
-  const m = data.meetings[id];
-  if (!m) return;
+        // Switch to notes tab unless keepTab is true (e.g. when peeking from Actions tab)
+        if (!keepTab && activeTab !== 'notes') switchTab('notes');
+        const m = data.meetings[id];
+        if (!m) return;
 
-  elEmpty.style.display  = 'none';
-  elEditor.style.display = 'flex';
-  elTitle.value = m.title    || '';
-  elDate.value  = m.date     || '';
-  elTime.value  = m.time     || '';
-  elCat.value   = m.category || '';
+        elEmpty.style.display = 'none';
+        elEditor.style.display = 'flex';
+        elTitle.value = m.title || '';
+        elDate.value = m.date || '';
+        elTime.value = m.time || '';
+        elCat.value = m.category || '';
 
-  const notes = m.notes || '';
-  elNotes.innerHTML = textToHTML(notes) || '<ol><li><br></li></ol>';
-  elNotes.dataset.placeholder = 'write your first note…';
+        const notes = m.notes || '';
+        elNotes.innerHTML = textToHTML(notes) || '<ol><li><br></li></ol>';
+        elNotes.dataset.placeholder = 'write your first note…';
 
-  const actions   = parseActions(notes);
-  const decisions = parseDecisions(notes);
-  updateInferred(actions, decisions);
-  updateStatusBar(m.date, actions, decisions);
-  setDirty(false);
-  renderList();
-}
+        const actions = parseActions(notes);
+        const decisions = parseDecisions(notes);
+        updateInferred(actions, decisions);
+        updateStatusBar(m.date, actions, decisions);
+        setDirty(false);
+        renderList();
+      }
 
-function newNote() {
-  clearTimeout(noteTimer.t); clearTimeout(metaTimer.t);
-  // Fix 4: flush both save paths before creating new note
-  if (isDirty && currentId) { saveMeta(); saveNote(htmlToText(elNotes.innerHTML)); }
+      function newNote() {
+        clearTimeout(noteTimer.t); clearTimeout(metaTimer.t);
+        // Fix 4: flush both save paths before creating new note
+        if (isDirty && currentId) { saveMeta(); saveNote(htmlToText(elNotes.innerHTML)); }
 
-  const id  = newId();
-  const now = new Date();
-  data.meetings[id] = {
-    id,
-    title: '', notes: '', category: '',
-    date: now.toISOString().slice(0, 10),
-    time: now.toTimeString().slice(0, 5),
-    createdAt: now.toISOString(),
-    updatedAt: now.toISOString(),
-  };
-  saveData();
-  openNote(id);
-  elTitle.focus();
-}
+        const id = newId();
+        const now = new Date();
+        data.meetings[id] = {
+          id,
+          title: '', notes: '', category: '',
+          date: now.toISOString().slice(0, 10),
+          time: now.toTimeString().slice(0, 5),
+          createdAt: now.toISOString(),
+          updatedAt: now.toISOString(),
+        };
+        saveData();
+        openNote(id);
+        elTitle.focus();
+      }
 
-// saveNote: write notes text, reindex, persist. Does NOT redraw the list
-// (title/date didn't change) but does refresh consolidated panels if open.
-function saveNote(notesText) {
-  if (!currentId) return;
-  const m = data.meetings[currentId];
-  if (!m) return;
-  // If notesText is not provided, extract from contenteditable
-  if (!notesText) notesText = htmlToText(elNotes.innerHTML);
-  noteTimer.t = null;
-  m.notes     = notesText;
-  m.updatedAt = new Date().toISOString();
-  indexMeeting(m);
-  saveData();
-  if (!metaTimer.t) setDirty(false);
-  if (activeTab === 'actions')   renderConsolidated('actions');
-  if (activeTab === 'decisions') renderConsolidated('decisions');
-}
+      // saveNote: write notes text, reindex, persist. Does NOT redraw the list
+      // (title/date didn't change) but does refresh consolidated panels if open.
+      function saveNote(notesText) {
+        if (!currentId) return;
+        const m = data.meetings[currentId];
+        if (!m) return;
+        // If notesText is not provided, extract from contenteditable
+        if (!notesText) notesText = htmlToText(elNotes.innerHTML);
+        noteTimer.t = null;
+        m.notes = notesText;
+        m.updatedAt = new Date().toISOString();
+        indexMeeting(m);
+        saveData();
+        if (!metaTimer.t) setDirty(false);
+        if (activeTab === 'actions') renderConsolidated('actions');
+        if (activeTab === 'decisions') renderConsolidated('decisions');
+      }
 
-// saveMeta: write title/date/time/category, reindex, redraw list.
-function saveMeta() {
-  if (!currentId) return;
-  const m = data.meetings[currentId];
-  if (!m) return;
-  metaTimer.t = null;
-  m.title     = elTitle.value;
-  m.date      = elDate.value;
-  m.time      = elTime.value;
-  m.category  = elCat.value;
-  m.updatedAt = new Date().toISOString();
-  indexMeeting(m);
-  saveData();
-  if (!noteTimer.t) setDirty(false);
-  renderList();
-  if (activeTab === 'actions')   renderConsolidated('actions');
-  if (activeTab === 'decisions') renderConsolidated('decisions');
-}
+      // saveMeta: write title/date/time/category, reindex, redraw list.
+      function saveMeta() {
+        if (!currentId) return;
+        const m = data.meetings[currentId];
+        if (!m) return;
+        metaTimer.t = null;
+        m.title = elTitle.value;
+        m.date = elDate.value;
+        m.time = elTime.value;
+        m.category = elCat.value;
+        m.updatedAt = new Date().toISOString();
+        indexMeeting(m);
+        saveData();
+        if (!noteTimer.t) setDirty(false);
+        renderList();
+        if (activeTab === 'actions') renderConsolidated('actions');
+        if (activeTab === 'decisions') renderConsolidated('decisions');
+      }
 
-function confirmDelete() { elDelModal.classList.add('open'); }
-function closeModal()    { elDelModal.classList.remove('open'); }
+      function confirmDelete() { elDelModal.classList.add('open'); }
+      function closeModal() { elDelModal.classList.remove('open'); }
 
-function doDelete() {
-  if (!currentId) return;
-  clearTimeout(noteTimer.t); clearTimeout(metaTimer.t);
-  // Fix 10: clear index directly rather than passing a stub to indexMeeting
-  clearIndex(currentId);
-  delete data.meetings[currentId];
-  saveData();
-  currentId = null;
-  closeModal();
-  elEditor.style.display = 'none';
-  elEmpty.style.display  = 'flex';
-  renderList();
-  if (activeTab === 'actions')   renderConsolidated('actions');
-  if (activeTab === 'decisions') renderConsolidated('decisions');
-  showToast('deleted');
-}
+      function doDelete() {
+        if (!currentId) return;
+        clearTimeout(noteTimer.t); clearTimeout(metaTimer.t);
+        // Fix 10: clear index directly rather than passing a stub to indexMeeting
+        clearIndex(currentId);
+        delete data.meetings[currentId];
+        saveData();
+        currentId = null;
+        closeModal();
+        elEditor.style.display = 'none';
+        elEmpty.style.display = 'flex';
+        renderList();
+        if (activeTab === 'actions') renderConsolidated('actions');
+        if (activeTab === 'decisions') renderConsolidated('decisions');
+        showToast('deleted');
+      }
 
-// ── DIRTY / AUTO-SAVE ──
-// Fix 2/9: separate timers for notes vs meta so neither cancels the other.
-// Fix 9: shared scheduler to avoid duplicating the debounce pattern.
-const noteTimer = { t: null };  // auto-save timer for notes text
-const metaTimer = { t: null };  // auto-save timer for title/date/category
+      // ── DIRTY / AUTO-SAVE ──
+      // Fix 2/9: separate timers for notes vs meta so neither cancels the other.
+      // Fix 9: shared scheduler to avoid duplicating the debounce pattern.
+      const noteTimer = { t: null };  // auto-save timer for notes text
+      const metaTimer = { t: null };  // auto-save timer for title/date/category
 
-// Fix 9: single debounce implementation shared by both save paths
-function scheduleSave(timer, saveFn, arg) {
-  setDirty(true);
-  clearTimeout(timer.t);
-  const savedFor = currentId;
-  timer.t = setTimeout(() => {
-    timer.t = null;
-    if (isDirty && currentId === savedFor) { saveFn(arg); showToast('saved'); }
-  }, 1800);
-}
+      // Fix 9: single debounce implementation shared by both save paths
+      function scheduleSave(timer, saveFn, arg) {
+        setDirty(true);
+        clearTimeout(timer.t);
+        const savedFor = currentId;
+        timer.t = setTimeout(() => {
+          timer.t = null;
+          if (isDirty && currentId === savedFor) { saveFn(arg); showToast('saved'); }
+        }, 1800);
+      }
 
-// Fix 2: separate timers — typing notes no longer cancels pending meta save
-function markDirty(cachedText) { 
-  // Convert HTML to text if not provided
-  if (!cachedText) cachedText = htmlToText(elNotes.innerHTML);
-  scheduleSave(noteTimer, saveNote, cachedText); 
-}
-function markMetaDirty()       { scheduleSave(metaTimer, saveMeta); }
+      // Fix 2: separate timers — typing notes no longer cancels pending meta save
+      function markDirty(cachedText) {
+        // Convert HTML to text if not provided
+        if (!cachedText) cachedText = htmlToText(elNotes.innerHTML);
+        scheduleSave(noteTimer, saveNote, cachedText);
+      }
+      function markMetaDirty() { scheduleSave(metaTimer, saveMeta); }
 
-function setDirty(val) {
-  isDirty = val;
-  elSdot.className = 'sdot ' + (val ? 'dirty' : 'saved');
-}
+      function setDirty(val) {
+        isDirty = val;
+        elSdot.className = 'sdot ' + (val ? 'dirty' : 'saved');
+      }
 
-function updateStatusBar(date, actions, decisions) {
-  const parts = [];
-  if (date)              parts.push(fmtDate(date));
-  if (actions.length)    parts.push(`${actions.length} action${actions.length   !== 1 ? 's' : ''}`);
-  if (decisions.length)  parts.push(`${decisions.length} decision${decisions.length !== 1 ? 's' : ''}`);
-  const today = new Date().toISOString().slice(0, 10);
-  const overdueCount = actions.filter(a => !a.isDone && a.deadline && a.deadline < today).length;
-  if (overdueCount)      parts.push(`${overdueCount} overdue`);
-  elStxt.textContent = parts.join(' · ') || '—';
-}
+      function updateStatusBar(date, actions, decisions) {
+        const parts = [];
+        if (date) parts.push(fmtDate(date));
+        if (actions.length) parts.push(`${actions.length} action${actions.length !== 1 ? 's' : ''}`);
+        if (decisions.length) parts.push(`${decisions.length} decision${decisions.length !== 1 ? 's' : ''}`);
+        const today = new Date().toISOString().slice(0, 10);
+        const overdueCount = actions.filter(a => !a.isDone && a.deadline && a.deadline < today).length;
+        if (overdueCount) parts.push(`${overdueCount} overdue`);
+        elStxt.textContent = parts.join(' · ') || '—';
+      }
 
-// ── EXPORT / IMPORT ──
-function exportData() {
-  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-  const a = Object.assign(document.createElement('a'), {
-    href: URL.createObjectURL(blob),
-    download: `minutes-${new Date().toISOString().slice(0, 10)}.json`,
-  });
-  a.click();
-  URL.revokeObjectURL(a.href);
-  showToast('exported ↑');
-}
+      // ── EXPORT / IMPORT ──
+      function exportData() {
+        const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+        const a = Object.assign(document.createElement('a'), {
+          href: URL.createObjectURL(blob),
+          download: `minutes-${new Date().toISOString().slice(0, 10)}.json`,
+        });
+        a.click();
+        URL.revokeObjectURL(a.href);
+        showToast('exported ↑');
+      }
 
-async function importData(input) {
-  const file = input.files[0];
-  if (!file) return;
-  clearTimeout(noteTimer.t); clearTimeout(metaTimer.t);
-  try {
-    const imported = JSON.parse(await file.text());
-    if (!imported.meetings) throw new Error('missing meetings key');
-    data = imported;
-    // Rebuild denormalized index (handles files from older versions without it)
-    data.actions = []; data.decisions = [];
-    Object.values(data.meetings).forEach(indexMeeting);
-    saveData();
-    currentId = null;
-    elEditor.style.display = 'none';
-    elEmpty.style.display  = 'flex';
-    renderList();
-    showToast('imported ✓');
-  } catch (e) {
-    console.error('importData failed:', e);
-    showToast('invalid file');
-  }
-  input.value = '';
-}
+      async function importData(input) {
+        const file = input.files[0];
+        if (!file) return;
+        clearTimeout(noteTimer.t); clearTimeout(metaTimer.t);
+        try {
+          const imported = JSON.parse(await file.text());
+          if (!imported.meetings) throw new Error('missing meetings key');
+          data = imported;
+          // Rebuild denormalized index (handles files from older versions without it)
+          data.actions = []; data.decisions = [];
+          Object.values(data.meetings).forEach(indexMeeting);
+          saveData();
+          currentId = null;
+          elEditor.style.display = 'none';
+          elEmpty.style.display = 'flex';
+          renderList();
+          showToast('imported ✓');
+        } catch (e) {
+          console.error('importData failed:', e);
+          showToast('invalid file');
+        }
+        input.value = '';
+      }
 
-// ── GLOBAL KEYBOARD ──
-document.addEventListener('keydown', e => {
-  if ((e.metaKey || e.ctrlKey) && e.key === 's') {
-    e.preventDefault();
-    // Fix 3: only run the save path(s) that have a pending timer
-    if (noteTimer.t) { clearTimeout(noteTimer.t); noteTimer.t = null; saveNote(htmlToText(elNotes.innerHTML)); }
-    if (metaTimer.t) { clearTimeout(metaTimer.t); metaTimer.t = null; saveMeta(); }
-    if (isDirty) showToast('saved');
-  }
-  if ((e.metaKey || e.ctrlKey) && e.key === 'n') {
-    e.preventDefault();
-    newNote();
-  }
-});
+      // ── GLOBAL KEYBOARD ──
+      document.addEventListener('keydown', e => {
+        if ((e.metaKey || e.ctrlKey) && e.key === 's') {
+          e.preventDefault();
+          // Fix 3: only run the save path(s) that have a pending timer
+          if (noteTimer.t) { clearTimeout(noteTimer.t); noteTimer.t = null; saveNote(htmlToText(elNotes.innerHTML)); }
+          if (metaTimer.t) { clearTimeout(metaTimer.t); metaTimer.t = null; saveMeta(); }
+          if (isDirty) showToast('saved');
+        }
+        if ((e.metaKey || e.ctrlKey) && e.key === 'n') {
+          e.preventDefault();
+          newNote();
+        }
+      });
 
-elDelModal.addEventListener('click', e => { if (e.target === elDelModal) closeModal(); });
+      elDelModal.addEventListener('click', e => { if (e.target === elDelModal) closeModal(); });
 
-[elTitle, elDate, elTime, elCat].forEach(el => {
-  el.addEventListener('input', markMetaDirty);
-});
+      [elTitle, elDate, elTime, elCat].forEach(el => {
+        el.addEventListener('input', markMetaDirty);
+      });
 
-elSearch.addEventListener('input', renderList);
+      elSearch.addEventListener('input', renderList);
 
-// ── UTILS ──
-function fmtDate(d) {
-  if (!d) return '';
-  const [y, m, day] = d.split('-');
-  return `${parseInt(day, 10)} ${['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][+m - 1]} ${y}`;
-}
+      // ── UTILS ──
+      function fmtDate(d) {
+        if (!d) return '';
+        const [y, m, day] = d.split('-');
+        return `${parseInt(day, 10)} ${['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'][+m - 1]} ${y}`;
+      }
 
-function deadlineBadge(deadline) {
-  if (!deadline) return '';
-  const today = new Date().toISOString().slice(0, 10);
-  const cls = deadline < today ? 'dl-overdue' : deadline === today ? 'dl-today' : 'dl-upcoming';
-  return `<span class="dl-badge ${cls}">${fmtDate(deadline)}</span>`;
-}
+      function deadlineBadge(deadline) {
+        if (!deadline) return '';
+        const today = new Date().toISOString().slice(0, 10);
+        const cls = deadline < today ? 'dl-overdue' : deadline === today ? 'dl-today' : 'dl-upcoming';
+        return `<span class="dl-badge ${cls}">${fmtDate(deadline)}</span>`;
+      }
 
-function esc(s) {
-  return String(s || '')
-    .replace(/&/g, '&amp;').replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
-}
+      function esc(s) {
+        return String(s || '')
+          .replace(/&/g, '&amp;').replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+      }
 
-function showToast(msg) {
-  elToast.textContent = msg;
-  elToast.classList.add('on');
-  clearTimeout(toastTmr);
-  toastTmr = setTimeout(() => elToast.classList.remove('on'), 2000);
-}
-
-
-// ── CLOSE ACTION ──
-function closeAction(btn) {
-  const fullText = btn.dataset.fulltext;
-  if (!fullText) return;
-
-  const note = prompt('Closure note:', '');
-  if (note === null) return; // cancelled
-
-  const meeting = data.meetings[currentId];
-  if (!meeting) return;
-
-  // Find and update the line in the notes
-  const lines = meeting.notes.split('\n');
-  const targetIdx = lines.findIndex(line => {
-    const cleaned = line.replace(/^\t+/, '').trim();
-    return cleaned.includes(fullText);
-  });
-  
-  if (targetIdx >= 0) {
-    lines[targetIdx] += ` [done: ${note}]`;
-    meeting.notes = lines.join('\n');
-    meeting.updatedAt = new Date().toISOString();
-    
-    // Update contenteditable if this is the current note
-    elNotes.innerHTML = textToHTML(meeting.notes);
-
-    
-    // Re-parse and update displays
-    const actions = parseActions(meeting.notes);
-    const decisions = parseDecisions(meeting.notes);
-    updateInferred(actions, decisions);
-    updateStatusBar(meeting.date, actions, decisions);
-    
-    // Re-index and save
-    indexMeeting(meeting);
-    saveData();
-    
-    // Refresh consolidated if visible
-    if (activeTab === 'actions') renderConsolidated('actions');
-  }
-}
-
-function closeActionFromTable(btn, meetingId) {
-  const note = prompt('Closure note:', '');
-  if (note === null) return;
-  
-  const actionData = JSON.parse(btn.dataset.action);
-  const meeting = data.meetings[meetingId];
-  if (!meeting) return;
-  
-  const lines = meeting.notes.split('\n');
-  const targetIdx = lines.findIndex(line => {
-    const cleaned = line.replace(/^\t+/, '').trim();
-    return cleaned.includes(actionData.fullText);
-  });
-  
-  if (targetIdx >= 0) {
-    lines[targetIdx] += ` [done: ${note}]`;
-    meeting.notes = lines.join('\n');
-    meeting.updatedAt = new Date().toISOString();
-    
-    if (currentId === meetingId) {
-      elNotes.innerHTML = textToHTML(meeting.notes);
-      const actions = parseActions(meeting.notes);
-      const decisions = parseDecisions(meeting.notes);
-      updateInferred(actions, decisions);
-      updateStatusBar(meeting.date, actions, decisions);
-    }
-    
-    indexMeeting(meeting);
-    saveData();
-    
-    // Refresh the table view
-    if (actionsView.mode === 'detail') {
-      renderActionsForPerson(actionsView.selectedPerson);
-    }
-  }
-}
+      function showToast(msg) {
+        elToast.textContent = msg;
+        elToast.classList.add('on');
+        clearTimeout(toastTmr);
+        toastTmr = setTimeout(() => elToast.classList.remove('on'), 2000);
+      }
 
 
-window.app = {
-  confirmDelete, closeModal, doDelete, newNote, openNote, exportData, importData,
-  closeAction, closeActionFromTable, showPersonActions, showPersonList
-};
+      // ── CLOSE ACTION ──
+      function closeAction(btn) {
+        const fullText = btn.dataset.fulltext;
+        if (!fullText) return;
 
-function showPersonActions(person) {
-  actionsView = { mode: 'detail', selectedPerson: person };
-  renderActionsByPerson();  // Re-render list to show highlighting
-  renderActionsForPerson(person);
-}
+        const note = prompt('Closure note:', '');
+        if (note === null) return; // cancelled
 
-function showPersonList() {
-  actionsView = { mode: 'list', selectedPerson: null };
-  renderActionsByPerson();  // Re-render to clear highlighting
-  // Hide table and show empty state
-  const tableContainer = document.getElementById('actions-table-container');
-  if (tableContainer) tableContainer.style.display = 'none';
-  elEmpty.style.display = 'flex';
-  elEmpty.textContent = 'select or create a meeting note';
-  elEditor.style.display = 'none';
-}
+        const meeting = data.meetings[currentId];
+        if (!meeting) return;
 
-renderList();
+        // Find and update the line in the notes
+        const lines = meeting.notes.split('\n');
+        const targetIdx = lines.findIndex(line => {
+          const cleaned = line.replace(/^\t+/, '').trim();
+          return cleaned.includes(fullText);
+        });
 
-})();
-</script>
+        if (targetIdx >= 0) {
+          lines[targetIdx] += ` [done: ${note}]`;
+          meeting.notes = lines.join('\n');
+          meeting.updatedAt = new Date().toISOString();
+
+          // Update contenteditable if this is the current note
+          elNotes.innerHTML = textToHTML(meeting.notes);
+
+
+          // Re-parse and update displays
+          const actions = parseActions(meeting.notes);
+          const decisions = parseDecisions(meeting.notes);
+          updateInferred(actions, decisions);
+          updateStatusBar(meeting.date, actions, decisions);
+
+          // Re-index and save
+          indexMeeting(meeting);
+          saveData();
+
+          // Refresh consolidated if visible
+          if (activeTab === 'actions') renderConsolidated('actions');
+        }
+      }
+
+      function closeActionFromTable(btn, meetingId) {
+        const note = prompt('Closure note:', '');
+        if (note === null) return;
+
+        const actionData = JSON.parse(btn.dataset.action);
+        const meeting = data.meetings[meetingId];
+        if (!meeting) return;
+
+        const lines = meeting.notes.split('\n');
+        const targetIdx = lines.findIndex(line => {
+          const cleaned = line.replace(/^\t+/, '').trim();
+          return cleaned.includes(actionData.fullText);
+        });
+
+        if (targetIdx >= 0) {
+          lines[targetIdx] += ` [done: ${note}]`;
+          meeting.notes = lines.join('\n');
+          meeting.updatedAt = new Date().toISOString();
+
+          if (currentId === meetingId) {
+            elNotes.innerHTML = textToHTML(meeting.notes);
+            const actions = parseActions(meeting.notes);
+            const decisions = parseDecisions(meeting.notes);
+            updateInferred(actions, decisions);
+            updateStatusBar(meeting.date, actions, decisions);
+          }
+
+          indexMeeting(meeting);
+          saveData();
+
+          // Refresh the table view
+          if (actionsView.mode === 'detail') {
+            renderActionsForPerson(actionsView.selectedPerson);
+          }
+        }
+      }
+
+
+      window.app = {
+        confirmDelete, closeModal, doDelete, newNote, openNote, exportData, importData,
+        closeAction, closeActionFromTable, showPersonActions, showPersonList
+      };
+
+      function showPersonActions(person) {
+        actionsView = { mode: 'detail', selectedPerson: person };
+        renderActionsByPerson();  // Re-render list to show highlighting
+        renderActionsForPerson(person);
+      }
+
+      function showPersonList() {
+        actionsView = { mode: 'list', selectedPerson: null };
+        renderActionsByPerson();  // Re-render to clear highlighting
+        // Hide table and show empty state
+        const tableContainer = document.getElementById('actions-table-container');
+        if (tableContainer) tableContainer.style.display = 'none';
+        elEmpty.style.display = 'flex';
+        elEmpty.textContent = 'select or create a meeting note';
+        elEditor.style.display = 'none';
+      }
+
+      renderList();
+
+    })();
+  </script>
 </body>
+
 </html>
