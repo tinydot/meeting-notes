@@ -230,6 +230,11 @@ input[type=date].mi, input[type=time].mi { cursor: pointer; }
   margin-top: 2px;
 }
 
+.dl-badge { font-size: 10px; padding: 1px 7px; border-radius: 2px; white-space: nowrap; letter-spacing: 0.2px; flex-shrink: 0; }
+.dl-overdue  { background: #fde8e8; color: #b33; }
+.dl-today    { background: #fff3cd; color: #c47a00; }
+.dl-upcoming { background: #f0f0f0; color: var(--muted); }
+
 .person-item {
   padding: 12px 12px; cursor: pointer;
   border-bottom: 1px solid var(--faint);
@@ -464,7 +469,7 @@ input[type=date].mi, input[type=time].mi { cursor: pointer; }
         </div>
         <div class="hint">
           <b>Tab</b> indent &nbsp;·&nbsp; <b>Shift+Tab</b> outdent &nbsp;·&nbsp;
-          <b>@name task</b> → action &nbsp;·&nbsp; <b>→ text</b> or <b>** text</b> → decision
+          <b>@name task</b> → action &nbsp;·&nbsp; <b>→ text</b> or <b>** text</b> → decision &nbsp;·&nbsp; <b>!YYYY-MM-DD</b> → deadline
         </div>
         <div class="inferred" id="inferred" style="display:none">
           <div class="inf-sec" id="act-sec" style="display:none">
@@ -549,6 +554,7 @@ function indexMeeting(meeting) {
       fullText: a.fullText,
       isDone: a.isDone,
       doneNote: a.doneNote,
+      deadline: a.deadline,
     });
   }
   for (const text of parseDecisions(meeting.notes || '')) {
@@ -656,15 +662,18 @@ function renderActionsByPerson() {
     return;
   }
   
+  const today = new Date().toISOString().slice(0, 10);
   elListActions.innerHTML = people.map(person => {
     const actions = byPerson[person];
     const openCount = actions.filter(a => !a.isDone).length;
     const doneCount = actions.filter(a => a.isDone).length;
+    const overdueCount = actions.filter(a => !a.isDone && a.deadline && a.deadline < today).length;
     const isSelected = actionsView.mode === 'detail' && actionsView.selectedPerson === person;
+    const overdueTag = overdueCount ? ` &nbsp;<span class="dl-badge dl-overdue">${overdueCount} overdue</span>` : '';
     return `
       <div class="person-item${isSelected ? ' person-item-active' : ''}" onclick="app.showPersonActions('${esc(person)}')">
         <div class="person-name">@${esc(person)}</div>
-        <div class="person-count">${openCount} open${doneCount ? `, ${doneCount} done` : ''}</div>
+        <div class="person-count">${openCount} open${overdueTag}${doneCount ? `, ${doneCount} done` : ''}</div>
       </div>`;
   }).join('');
 }
@@ -701,6 +710,7 @@ function renderActionsForPerson(person) {
         <thead>
           <tr>
             <th>Action</th>
+            <th>Deadline</th>
             <th>Meeting</th>
             <th>Date</th>
             <th>Status</th>
@@ -708,15 +718,16 @@ function renderActionsForPerson(person) {
         </thead>
         <tbody>
   `;
-  
+
   for (const a of actions) {
     const statusCell = a.isDone
       ? `<td class="status-done">${esc(a.doneNote)}</td>`
       : `<td class="status-open"><button class="table-close-btn" data-action="${esc(JSON.stringify(a))}" onclick="app.closeActionFromTable(this, '${a.meetingId}')">Mark done</button></td>`;
-    
+
     tableHTML += `
       <tr class="${a.isDone ? 'row-done' : ''}" onclick="app.openNote('${a.meetingId}', true)">
         <td class="action-text">${esc(a.text)}</td>
+        <td>${deadlineBadge(a.deadline)}</td>
         <td class="meeting-title">${esc(a.meetingTitle || 'Untitled')}</td>
         <td class="meeting-date">${a.meetingDate ? fmtDate(a.meetingDate) : '—'}</td>
         ${statusCell}
@@ -949,22 +960,28 @@ function parseActions(text) {
     
     // Keep full text (with @mentions intact) for display
     let fullText = line.replace(/^[→\-\*\d.]+\s*/, '').replace(/\s+/g, ' ').trim();
-    
+
+    // Extract deadline marker: !YYYY-MM-DD
+    const deadlineMatch = fullText.match(/!(\d{4}-\d{2}-\d{2})/);
+    const deadline = deadlineMatch ? deadlineMatch[1] : null;
+
     // Check for completion marker: [done: ...] or [closed: ...]
     const doneMatch = fullText.match(/\[(done|closed):\s*(.+?)\]\s*$/i);
     const isDone = !!doneMatch;
     const doneNote = doneMatch ? doneMatch[2].trim() : '';
-    
-    // For completed actions, strip the marker from display text but keep the base text
-    const displayText = isDone ? fullText.replace(/\[(done|closed):.+?\]\s*$/i, '').trim() : fullText;
-    
+
+    // Strip markers from display text
+    let displayText = isDone ? fullText.replace(/\[(done|closed):.+?\]\s*$/i, '').trim() : fullText;
+    displayText = displayText.replace(/!\d{4}-\d{2}-\d{2}/g, '').replace(/\s+/g, ' ').trim();
+
     if (displayText) {
-      out.push({ 
-        owners: mentions.map(m => m[1]), 
+      out.push({
+        owners: mentions.map(m => m[1]),
         text: displayText,
         fullText: fullText,  // original with marker intact
         isDone,
-        doneNote 
+        doneNote,
+        deadline,
       });
     }
   }
@@ -997,6 +1014,7 @@ function updateInferred(actions, decisions) {
       `<div class="inf-row${a.isDone ? ' inf-row-done' : ''}">
         <span class="inf-who">${a.owners.map(o => '@' + o).join(', ')}</span>
         <span class="inf-txt">${esc(a.text)}</span>
+        ${a.deadline ? deadlineBadge(a.deadline) : ''}
         ${a.isDone
           ? `<span class="inf-done-note">${esc(a.doneNote)}</span>`
           : `<button class="inf-close-btn" onclick="app.closeAction(this)" data-fulltext="${esc(a.fullText)}" title="Mark done">✓</button>`
@@ -1188,6 +1206,9 @@ function updateStatusBar(date, actions, decisions) {
   if (date)              parts.push(fmtDate(date));
   if (actions.length)    parts.push(`${actions.length} action${actions.length   !== 1 ? 's' : ''}`);
   if (decisions.length)  parts.push(`${decisions.length} decision${decisions.length !== 1 ? 's' : ''}`);
+  const today = new Date().toISOString().slice(0, 10);
+  const overdueCount = actions.filter(a => !a.isDone && a.deadline && a.deadline < today).length;
+  if (overdueCount)      parts.push(`${overdueCount} overdue`);
   elStxt.textContent = parts.join(' · ') || '—';
 }
 
@@ -1255,6 +1276,13 @@ function fmtDate(d) {
   if (!d) return '';
   const [y, m, day] = d.split('-');
   return `${parseInt(day, 10)} ${['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][+m - 1]} ${y}`;
+}
+
+function deadlineBadge(deadline) {
+  if (!deadline) return '';
+  const today = new Date().toISOString().slice(0, 10);
+  const cls = deadline < today ? 'dl-overdue' : deadline === today ? 'dl-today' : 'dl-upcoming';
+  return `<span class="dl-badge ${cls}">${fmtDate(deadline)}</span>`;
 }
 
 function esc(s) {
