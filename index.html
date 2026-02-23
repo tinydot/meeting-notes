@@ -1054,6 +1054,32 @@
       font-size: 10px;
       color: var(--muted);
     }
+
+    .tag-note-line {
+      line-height: 1.6;
+    }
+
+    .tag-note-line + .tag-note-line {
+      margin-top: 3px;
+      padding-top: 3px;
+      border-top: 1px solid var(--faint);
+    }
+
+    .tag-item-active {
+      background: #f4f4f4;
+      position: relative;
+    }
+
+    .tag-item-active::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 22%;
+      bottom: 22%;
+      width: 2px;
+      background: var(--fg);
+      border-radius: 2px;
+    }
   </style>
 </head>
 
@@ -1304,6 +1330,12 @@
           tableContainer.style.display = (tab === 'actions' && actionsView.mode === 'detail') ? 'block' : 'none';
         }
 
+        // Hide tags table container when switching away from tags
+        const tagsTableContainer = document.getElementById('tags-table-container');
+        if (tagsTableContainer) {
+          tagsTableContainer.style.display = (tab === 'tags' && tagsView.mode === 'detail') ? 'block' : 'none';
+        }
+
         // Show/hide editor and empty state based on tab
         if (tab === 'notes') {
           // Switching to notes - show editor if there's a currentId, otherwise show empty
@@ -1315,6 +1347,14 @@
             elEmpty.style.display = 'flex';
             elEmpty.textContent = 'select or create a meeting note';
           }
+        }
+
+        if (tab === 'tags' && tagsView.mode === 'detail') {
+          elEditor.style.display = 'none';
+          elEmpty.style.display = 'none';
+          // Re-show tags table in case it was hidden when a note was opened inline
+          const tc = document.getElementById('tags-table-container');
+          if (tc) tc.style.display = 'block';
         }
 
         if (tab === 'actions') renderConsolidated('actions');
@@ -1438,6 +1478,9 @@
 
       // Track current view state for actions tab
       let actionsView = { mode: 'list', selectedPerson: null };
+
+      // Track current view state for tags tab
+      let tagsView = { mode: 'list', selectedTag: null };
 
       function renderConsolidated(type) {
         if (type === 'actions') {
@@ -1830,6 +1873,14 @@
 
         elEmpty.style.display = 'none';
         elEditor.style.display = 'flex';
+
+        // When opening a note from within the tags tab, hide the tags table so
+        // the editor fills the full main area. Clicking any tag restores the table.
+        if (activeTab === 'tags') {
+          const tc = document.getElementById('tags-table-container');
+          if (tc) tc.style.display = 'none';
+        }
+
         elTitle.value = m.title || '';
         elDate.value = m.date || '';
         elTime.value = m.time || '';
@@ -2146,18 +2197,84 @@
         const entries = Object.entries(tagMap)
           .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]));
         elListTags.innerHTML = entries.length
-          ? entries.map(([tag, count]) => `
-          <div class="tag-item" onclick="app.filterByTag('${esc(tag)}')">
+          ? entries.map(([tag, count]) => {
+              const isSelected = tagsView.selectedTag === tag;
+              return `
+          <div class="tag-item${isSelected ? ' tag-item-active' : ''}" onclick="app.filterByTag('${esc(tag)}')">
             <span class="tag-item-name">#${esc(tag)}</span>
             <span class="tag-item-count">${count}</span>
-          </div>`).join('')
+          </div>`;
+            }).join('')
           : '<div class="list-empty">no tags yet</div>';
       }
 
+      function showTagNotes(tag) {
+        const meetings = Object.values(data.meetings)
+          .filter(m => (m.tags || []).includes(tag))
+          .sort((a, b) => (b.updatedAt || '').localeCompare(a.updatedAt || ''));
+
+        elEmpty.style.display = 'none';
+        elEditor.style.display = 'none';
+
+        // Extract lines from a note that contain the given tag
+        function tagLines(notes) {
+          const re = new RegExp('#' + tag + '\\b', 'i');
+          return (notes || '').split('\n')
+            .map(l => l.replace(/^\t+/, '').trim())
+            .filter(l => re.test(l));
+        }
+
+        let tableHTML = `
+    <div class="actions-table-wrap">
+      <div class="actions-table-header">
+        <h2>#${esc(tag)}</h2>
+        <span class="actions-count">${meetings.length} note${meetings.length !== 1 ? 's' : ''}</span>
+      </div>
+      <table class="actions-table">
+        <thead>
+          <tr>
+            <th>Note</th>
+            <th>Meeting</th>
+            <th>Date</th>
+          </tr>
+        </thead>
+        <tbody>
+`;
+        for (const m of meetings) {
+          const lines = tagLines(m.notes);
+          const noteCell = lines.length
+            ? lines.map(l => `<div class="tag-note-line">${esc(l)}</div>`).join('')
+            : `<span class="meeting-title">${esc(m.title || 'Untitled')}</span>`;
+          tableHTML += `
+      <tr onclick="app.openNote('${m.id}', true)">
+        <td class="action-text">${noteCell}</td>
+        <td class="meeting-title">${esc(m.title || 'Untitled')}</td>
+        <td class="meeting-date">${m.date ? fmtDate(m.date) : '—'}</td>
+      </tr>`;
+        }
+        tableHTML += `
+        </tbody>
+      </table>
+    </div>
+`;
+
+        const main = document.querySelector('.main');
+        let tagsTableContainer = document.getElementById('tags-table-container');
+        if (!tagsTableContainer) {
+          tagsTableContainer = document.createElement('div');
+          tagsTableContainer.id = 'tags-table-container';
+          tagsTableContainer.className = 'actions-table-container';
+          main.appendChild(tagsTableContainer);
+        }
+        tagsTableContainer.innerHTML = tableHTML;
+        tagsTableContainer.style.display = 'block';
+      }
+
       function filterByTag(tag) {
-        elSearch.value = '#' + tag;
-        switchTab('notes');
-        renderList();
+        tagsView = { mode: 'detail', selectedTag: tag };
+        switchTab('tags');
+        renderTagsPanel();
+        showTagNotes(tag);
       }
 
       window.app = {
