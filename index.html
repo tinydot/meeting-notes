@@ -1005,6 +1005,55 @@
     .mb.p:hover {
       opacity: 0.75;
     }
+
+    /* ── TAGS ── */
+    .ni-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 3px;
+      margin-top: 4px;
+    }
+
+    .tag-chip {
+      font-size: 9px;
+      padding: 1px 5px;
+      border-radius: 9px;
+      background: #f0f0f0;
+      color: var(--muted);
+      letter-spacing: 0.2px;
+      cursor: pointer;
+      transition: background 0.1s, color 0.1s;
+      white-space: nowrap;
+    }
+
+    .tag-chip:hover {
+      background: var(--fg);
+      color: var(--bg);
+    }
+
+    .tag-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 9px 12px;
+      cursor: pointer;
+      border-bottom: 1px solid var(--faint);
+      transition: background 0.1s;
+    }
+
+    .tag-item:hover {
+      background: #f8f8f8;
+    }
+
+    .tag-item-name {
+      font-size: 12px;
+      color: var(--fg);
+    }
+
+    .tag-item-count {
+      font-size: 10px;
+      color: var(--muted);
+    }
   </style>
 </head>
 
@@ -1025,6 +1074,7 @@
         <button class="rail-tab active" data-tab="notes">Notes</button>
         <button class="rail-tab" data-tab="actions">Actions</button>
         <button class="rail-tab" data-tab="decisions">Decisions</button>
+        <button class="rail-tab" data-tab="tags">Tags</button>
       </div>
 
       <div class="note-list visible" id="note-list"></div>
@@ -1043,6 +1093,13 @@
           <input type="text" id="filter-decisions" placeholder="filter decisions…">
         </div>
         <div class="con-list" id="list-decisions"></div>
+      </div>
+
+      <div class="consolidated" id="con-tags">
+        <div class="con-filter">
+          <input type="text" id="filter-tags" placeholder="filter tags…">
+        </div>
+        <div class="con-list" id="list-tags"></div>
       </div>
 
       <div class="rail-foot">
@@ -1086,7 +1143,7 @@
           <div class="hint">
             <b>Tab</b> indent &nbsp;·&nbsp; <b>Shift+Tab</b> outdent &nbsp;·&nbsp;
             <b>@name task</b> → action &nbsp;·&nbsp; <b>→ text</b> or <b>** text</b> → decision &nbsp;·&nbsp;
-            <b>!YYYY-MM-DD</b> → deadline &nbsp;·&nbsp; <b>!today</b> <b>!tomorrow</b> <b>!nextweek</b> → shortcuts
+            <b>!YYYY-MM-DD</b> → deadline &nbsp;·&nbsp; <b>!today</b> <b>!tomorrow</b> <b>!nextweek</b> → shortcuts &nbsp;·&nbsp; <b>#tag</b> → tag
           </div>
           <div class="inferred" id="inferred" style="display:none">
             <div class="inf-sec" id="act-sec" style="display:none">
@@ -1152,6 +1209,8 @@
       }
 
       let data = loadData();
+      // Populate tags for meetings from older data versions (tags field missing)
+      Object.values(data.meetings).forEach(m => { if (!m.tags) m.tags = parseTags(m.notes || ''); });
 
       function newId() { return Date.now().toString(36) + Math.random().toString(36).slice(2); }
 
@@ -1160,6 +1219,7 @@
       function indexMeeting(meeting) {
         data.actions = data.actions.filter(a => a.meetingId !== meeting.id);
         data.decisions = data.decisions.filter(d => d.meetingId !== meeting.id);
+        meeting.tags = parseTags(meeting.notes || '');
 
         for (const a of parseActions(meeting.notes || '')) {
           data.actions.push({
@@ -1219,6 +1279,9 @@
       const elListDecisions = document.getElementById('list-decisions');
       const elFilterActions = document.getElementById('filter-actions');
       const elFilterDecisions = document.getElementById('filter-decisions');
+      const elConTags = document.getElementById('con-tags');
+      const elListTags = document.getElementById('list-tags');
+      const elFilterTags = document.getElementById('filter-tags');
 
       // ── RAIL TABS ──
       document.querySelectorAll('.rail-tab').forEach(btn => {
@@ -1233,6 +1296,7 @@
         elList.classList.toggle('visible', tab === 'notes');
         elConActions.classList.toggle('visible', tab === 'actions');
         elConDecisions.classList.toggle('visible', tab === 'decisions');
+        elConTags.classList.toggle('visible', tab === 'tags');
 
         // Hide table container when switching away from actions
         const tableContainer = document.getElementById('actions-table-container');
@@ -1255,6 +1319,7 @@
 
         if (tab === 'actions') renderConsolidated('actions');
         if (tab === 'decisions') renderConsolidated('decisions');
+        if (tab === 'tags') renderTagsPanel();
       }
 
       // ── CONSOLIDATED VIEW ──
@@ -1405,6 +1470,7 @@
         else renderActionsForPerson(actionsView.selectedPerson);
       });
       elFilterDecisions.addEventListener('input', () => renderConsolidated('decisions'));
+      elFilterTags.addEventListener('input', renderTagsPanel);
 
       // Input event listener is already set up in the contenteditable keyboard handlers section
 
@@ -1654,6 +1720,14 @@
         return out;
       }
 
+      function parseTags(text) {
+        const tags = new Set();
+        for (const m of (text || '').matchAll(/#([a-zA-Z][a-zA-Z0-9_-]*)/g)) {
+          tags.add(m[1].toLowerCase());
+        }
+        return [...tags].sort();
+      }
+
       function parseDecisions(text) {
         const out = [];
         for (const raw of text.split('\n')) {
@@ -1704,15 +1778,23 @@
 
       // ── SIDEBAR NOTE LIST ──
       function renderList() {
-        const q = elSearch.value.toLowerCase();
+        const q = elSearch.value.toLowerCase().trim();
         let meetings = Object.values(data.meetings)
           .sort((a, b) => (b.updatedAt || '').localeCompare(a.updatedAt || ''));
 
-        if (q) meetings = meetings.filter(m =>
-          (m.title || '').toLowerCase().includes(q) ||
-          (m.notes || '').toLowerCase().includes(q) ||
-          (m.category || '').toLowerCase().includes(q)
-        );
+        if (q) {
+          if (q.startsWith('#')) {
+            const tag = q.slice(1);
+            meetings = meetings.filter(m => (m.tags || []).includes(tag));
+          } else {
+            meetings = meetings.filter(m =>
+              (m.title || '').toLowerCase().includes(q) ||
+              (m.notes || '').toLowerCase().includes(q) ||
+              (m.category || '').toLowerCase().includes(q) ||
+              (m.tags || []).some(t => t.includes(q))
+            );
+          }
+        }
 
         if (!meetings.length) {
           elList.innerHTML = `<div class="list-empty">${q ? 'no results' : 'no notes yet'}</div>`;
@@ -1720,9 +1802,14 @@
         }
         elList.innerHTML = meetings.map(m => {
           const sub = [m.date ? fmtDate(m.date) : '', m.category || ''].filter(Boolean).join(' · ');
+          const tags = m.tags || [];
+          const tagHtml = tags.length
+            ? `<div class="ni-tags">${tags.map(t => `<span class="tag-chip" onclick="event.stopPropagation();app.filterByTag('${esc(t)}')">#${esc(t)}</span>`).join('')}</div>`
+            : '';
           return `<div class="ni${m.id === currentId ? ' active' : ''}" onclick="app.openNote('${m.id}')">
       <div class="ni-title">${esc(m.title || 'Untitled')}</div>
       ${sub ? `<div class="ni-sub">${esc(sub)}</div>` : ''}
+      ${tagHtml}
     </div>`;
         }).join('');
       }
@@ -2045,9 +2132,37 @@
       }
 
 
+      // ── TAGS PANEL ──
+      function renderTagsPanel() {
+        const q = elFilterTags.value.toLowerCase().trim();
+        const tagMap = {};
+        for (const m of Object.values(data.meetings)) {
+          for (const tag of (m.tags || [])) {
+            if (!q || tag.includes(q)) {
+              tagMap[tag] = (tagMap[tag] || 0) + 1;
+            }
+          }
+        }
+        const entries = Object.entries(tagMap)
+          .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]));
+        elListTags.innerHTML = entries.length
+          ? entries.map(([tag, count]) => `
+          <div class="tag-item" onclick="app.filterByTag('${esc(tag)}')">
+            <span class="tag-item-name">#${esc(tag)}</span>
+            <span class="tag-item-count">${count}</span>
+          </div>`).join('')
+          : '<div class="list-empty">no tags yet</div>';
+      }
+
+      function filterByTag(tag) {
+        elSearch.value = '#' + tag;
+        switchTab('notes');
+        renderList();
+      }
+
       window.app = {
         confirmDelete, closeModal, doDelete, newNote, openNote, exportData, importData,
-        closeAction, closeActionFromTable, showPersonActions, showPersonList
+        closeAction, closeActionFromTable, showPersonActions, showPersonList, filterByTag
       };
 
       function showPersonActions(person) {
