@@ -1719,7 +1719,7 @@
 
           if (displayText) {
             out.push({
-              owners: mentions.map(m => m[1]),
+              owners: mentions.map(m => m[1].toLowerCase()),
               text: displayText,
               fullText: fullText,  // original with marker intact
               isDone,
