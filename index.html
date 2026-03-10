@@ -1623,11 +1623,28 @@
             : range.startContainer.closest('li');
 
           if (currentLi) {
+            // Extract content after cursor into the new li
+            const splitRange = document.createRange();
+            splitRange.setStart(range.endContainer, range.endOffset);
+            splitRange.setEnd(currentLi, currentLi.childNodes.length);
+            const afterContent = splitRange.extractContents();
+
             const newLi = document.createElement('li');
-            newLi.innerHTML = '<br>'; // Placeholder for empty li
+            const hasContent = afterContent.textContent.length > 0 || afterContent.querySelector('ul, ol');
+            if (hasContent) {
+              newLi.appendChild(afterContent);
+            } else {
+              newLi.innerHTML = '<br>';
+            }
+
+            // Ensure current li has a placeholder if now empty
+            if (!currentLi.textContent && !currentLi.querySelector('ul, ol, br')) {
+              currentLi.innerHTML = '<br>';
+            }
+
             currentLi.parentElement.insertBefore(newLi, currentLi.nextSibling);
 
-            // Move cursor to new li
+            // Move cursor to start of new li
             const newRange = document.createRange();
             newRange.setStart(newLi, 0);
             newRange.collapse(true);
