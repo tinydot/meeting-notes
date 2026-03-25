@@ -1671,8 +1671,20 @@
               const ul = currentLi.parentElement;
               const parentLi = ul.parentElement;
               if (parentLi && parentLi.tagName === 'LI') {
+                const savedAnchor = sel.anchorNode;
+                const savedOffset = sel.anchorOffset;
                 parentLi.parentElement.insertBefore(currentLi, parentLi.nextSibling);
                 if (ul.children.length === 0) ul.remove();
+                // Restore cursor after DOM manipulation (ul.remove() can invalidate selection)
+                const newRange = document.createRange();
+                try {
+                  newRange.setStart(savedAnchor, savedOffset);
+                } catch (_) {
+                  newRange.setStart(currentLi, 0);
+                }
+                newRange.collapse(true);
+                sel.removeAllRanges();
+                sel.addRange(newRange);
                 elNotes.dispatchEvent(new Event('input'));
               }
             }
@@ -1680,12 +1692,24 @@
             // Tab: indent
             const prevLi = currentLi.previousElementSibling;
             if (prevLi && prevLi.tagName === 'LI') {
-              let ul = prevLi.querySelector('ul');
+              const savedAnchor = sel.anchorNode;
+              const savedOffset = sel.anchorOffset;
+              let ul = prevLi.querySelector(':scope > ul');
               if (!ul) {
                 ul = document.createElement('ul');
                 prevLi.appendChild(ul);
               }
               ul.appendChild(currentLi);
+              // Restore cursor after DOM manipulation
+              const newRange = document.createRange();
+              try {
+                newRange.setStart(savedAnchor, savedOffset);
+              } catch (_) {
+                newRange.setStart(currentLi, 0);
+              }
+              newRange.collapse(true);
+              sel.removeAllRanges();
+              sel.addRange(newRange);
               elNotes.dispatchEvent(new Event('input'));
             }
           }
