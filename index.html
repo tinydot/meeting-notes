@@ -209,13 +209,12 @@
     /* consolidated panels */
     .consolidated {
       flex: 1;
-      min-height: 0;
+      overflow-y: auto;
       display: none;
-      flex-direction: column;
     }
 
     .consolidated.visible {
-      display: flex;
+      display: block;
     }
 
     .consolidated::-webkit-scrollbar {
@@ -227,9 +226,12 @@
     }
 
     .con-filter {
+      position: sticky;
+      top: 0;
+      background: var(--bg);
+      z-index: 1;
       padding: 8px 12px;
       border-bottom: 1px solid var(--faint);
-      flex-shrink: 0;
     }
 
     .con-filter input {
@@ -254,9 +256,6 @@
     }
 
     .con-list {
-      flex: 1;
-      min-height: 0;
-      overflow-y: auto;
     }
 
     .con-item {
