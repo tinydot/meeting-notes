@@ -1107,7 +1107,7 @@
 
       <div class="consolidated" id="con-actions">
         <div class="con-filter">
-          <input type="text" id="filter-actions" placeholder="filter by person…">
+          <input type="text" id="filter-actions" placeholder="filter actions…">
         </div>
         <div class="con-list" id="list-actions">
           <!-- Person list shown by default, detail view shown when person clicked -->
@@ -1316,7 +1316,7 @@
         // Hide table container when switching away from actions
         const tableContainer = document.getElementById('actions-table-container');
         if (tableContainer) {
-          tableContainer.style.display = (tab === 'actions' && actionsView.mode === 'detail') ? 'block' : 'none';
+          tableContainer.style.display = (tab === 'actions' && (actionsView.mode === 'detail' || actionsView.mode === 'all')) ? 'block' : 'none';
         }
 
         // Hide tags table container when switching away from tags
@@ -1464,22 +1464,114 @@
         tableContainer.style.display = 'block';
       }
 
+      // Render all actions sorted by deadline (asc), then meeting date (asc) for missing deadline
+      function renderAllActions() {
+        const q = elFilterActions.value.toLowerCase();
+
+        let actions = data.actions.slice();
+        if (q) {
+          actions = actions.filter(a =>
+            a.text.toLowerCase().includes(q) ||
+            a.owners.some(o => o.toLowerCase().includes(q))
+          );
+        }
+
+        actions.sort((a, b) => {
+          const ad = a.deadline, bd = b.deadline;
+          if (ad && bd) return ad.localeCompare(bd);
+          if (ad) return -1;
+          if (bd) return 1;
+          return (a.meetingDate || '').localeCompare(b.meetingDate || '');
+        });
+
+        const main = document.querySelector('.main');
+        let tableContainer = document.getElementById('actions-table-container');
+        if (!tableContainer) {
+          tableContainer = document.createElement('div');
+          tableContainer.id = 'actions-table-container';
+          tableContainer.className = 'actions-table-container';
+          main.appendChild(tableContainer);
+        }
+
+        if (!actions.length) {
+          elEmpty.style.display = 'flex';
+          elEmpty.textContent = 'no actions yet';
+          elEditor.style.display = 'none';
+          tableContainer.style.display = 'none';
+          return;
+        }
+
+        elEmpty.style.display = 'none';
+        elEditor.style.display = 'none';
+
+        let tableHTML = `
+    <div class="actions-table-wrap">
+      <div class="actions-table-header">
+        <h2>All Actions</h2>
+        <span class="actions-count">${actions.length} item${actions.length !== 1 ? 's' : ''}</span>
+      </div>
+      <table class="actions-table">
+        <thead>
+          <tr>
+            <th>Action</th>
+            <th>Deadline</th>
+            <th>Assigned to</th>
+            <th>Meeting</th>
+            <th>Date</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+  `;
+
+        for (const a of actions) {
+          const statusCell = a.isDone
+            ? `<td class="status-done">${esc(a.doneNote)}</td>`
+            : `<td class="status-open"><button class="table-close-btn" data-action="${esc(JSON.stringify(a))}" onclick="app.closeActionFromTable(this, '${a.meetingId}')">Mark done</button></td>`;
+          const ownersDisplay = a.owners.map(o => `@${esc(o)}`).join(', ');
+          tableHTML += `
+      <tr class="${a.isDone ? 'row-done' : ''}" onclick="app.openNote('${a.meetingId}', true)">
+        <td class="action-text">${esc(a.text)}</td>
+        <td>${deadlineBadge(a.deadline)}</td>
+        <td class="action-owners">${ownersDisplay}</td>
+        <td class="meeting-title">${esc(a.meetingTitle || 'Untitled')}</td>
+        <td class="meeting-date">${a.meetingDate ? fmtDate(a.meetingDate) : '—'}</td>
+        ${statusCell}
+      </tr>
+    `;
+        }
+
+        tableHTML += `
+        </tbody>
+      </table>
+    </div>
+  `;
+
+        tableContainer.innerHTML = tableHTML;
+        tableContainer.style.display = 'block';
+      }
+
       // Track current view state for actions tab
-      let actionsView = { mode: 'list', selectedPerson: null };
+      let actionsView = { mode: 'all', selectedPerson: null };
 
       // Track current view state for tags tab
       let tagsView = { mode: 'list', selectedTag: null };
 
       function renderConsolidated(type) {
-        if (actionsView.mode === 'list') {
+        if (actionsView.mode === 'all') {
+          renderActionsByPerson();
+          renderAllActions();
+        } else if (actionsView.mode === 'list') {
           renderActionsByPerson();
         } else {
+          renderActionsByPerson();
           renderActionsForPerson(actionsView.selectedPerson);
         }
       }
 
       elFilterActions.addEventListener('input', () => {
-        if (actionsView.mode === 'list') renderActionsByPerson();
+        if (actionsView.mode === 'all') { renderActionsByPerson(); renderAllActions(); }
+        else if (actionsView.mode === 'list') renderActionsByPerson();
         else renderActionsForPerson(actionsView.selectedPerson);
       });
       elFilterTags.addEventListener('input', renderTagsPanel);
@@ -2296,14 +2388,9 @@
       }
 
       function showPersonList() {
-        actionsView = { mode: 'list', selectedPerson: null };
-        renderActionsByPerson();  // Re-render to clear highlighting
-        // Hide table and show empty state
-        const tableContainer = document.getElementById('actions-table-container');
-        if (tableContainer) tableContainer.style.display = 'none';
-        elEmpty.style.display = 'flex';
-        elEmpty.textContent = 'select or create a meeting note';
-        elEditor.style.display = 'none';
+        actionsView = { mode: 'all', selectedPerson: null };
+        renderActionsByPerson();
+        renderAllActions();
       }
 
       renderList();
