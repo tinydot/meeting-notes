@@ -1212,24 +1212,48 @@
       // actions[] and decisions[] are denormalized — derived from meeting notes on
       // every save so the consolidated view reads directly without scanning all notes.
 
-      const STORE_KEY = 'minutes_v1';
+      const DB_NAME = 'minutes_db';
+      const DB_STORE = 'kv';
+      const DB_KEY = 'minutes_v1';
+      let _db = null;
 
-      function loadData() {
+      function openDB() {
+        if (_db) return Promise.resolve(_db);
+        return new Promise((resolve, reject) => {
+          const req = indexedDB.open(DB_NAME, 1);
+          req.onupgradeneeded = e => e.target.result.createObjectStore(DB_STORE);
+          req.onsuccess = e => { _db = e.target.result; resolve(_db); };
+          req.onerror = () => reject(req.error);
+        });
+      }
+
+      async function loadData() {
         try {
-          const raw = localStorage.getItem(STORE_KEY);
-          if (raw) return JSON.parse(raw);
-        } catch (e) { console.warn('load failed:', e); }
-        return { meetings: {}, actions: [], decisions: [] };
+          const db = await openDB();
+          const result = await new Promise((resolve, reject) => {
+            const tx = db.transaction(DB_STORE, 'readonly');
+            const req = tx.objectStore(DB_STORE).get(DB_KEY);
+            req.onsuccess = () => resolve(req.result);
+            req.onerror = () => reject(req.error);
+          });
+          if (result) return result;
+        } catch (e) { console.warn('IndexedDB load failed:', e); }
+        return null;
       }
 
-      function saveData() {
-        try { localStorage.setItem(STORE_KEY, JSON.stringify(data)); }
-        catch (e) { console.warn('save failed:', e); }
+      async function saveData() {
+        try {
+          const db = await openDB();
+          await new Promise((resolve, reject) => {
+            const tx = db.transaction(DB_STORE, 'readwrite');
+            const req = tx.objectStore(DB_STORE).put(data, DB_KEY);
+            req.onsuccess = () => resolve();
+            req.onerror = () => reject(req.error);
+          });
+        } catch (e) { console.warn('IndexedDB save failed:', e); }
       }
 
-      let data = loadData();
-      // Populate tags for meetings from older data versions (tags field missing)
-      Object.values(data.meetings).forEach(m => { if (!m.tags) m.tags = parseTags(m.notes || ''); });
+      let data = { meetings: {}, actions: [], decisions: [] };
 
       function newId() { return Date.now().toString(36) + Math.random().toString(36).slice(2); }
 
@@ -2393,7 +2417,31 @@
         renderAllActions();
       }
 
-      renderList();
+      // Register service worker for offline support
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('./sw.js').catch(e => console.warn('SW registration failed:', e));
+      }
+
+      // Async init: load from IndexedDB, migrating from localStorage if needed
+      (async () => {
+        let stored = await loadData();
+        if (!stored) {
+          try {
+            const raw = localStorage.getItem(DB_KEY);
+            if (raw) {
+              stored = JSON.parse(raw);
+              data = stored;
+              await saveData();
+              localStorage.removeItem(DB_KEY);
+            }
+          } catch (e) { console.warn('localStorage migration failed:', e); }
+        } else {
+          data = stored;
+        }
+        // Populate tags for meetings from older data versions (tags field missing)
+        Object.values(data.meetings).forEach(m => { if (!m.tags) m.tags = parseTags(m.notes || ''); });
+        renderList();
+      })();
 
     })();
   </script>
