@@ -28,10 +28,9 @@ Then visit http://localhost:3000.
 
 Pushes to `main` are deployed to GitHub Pages by `.github/workflows/static.yml`, which uploads the entire repository as the Pages artifact.
 
-## Editor shortcuts
+## Editor
 
-- **Tab** / **Shift+Tab** — indent / outdent
-- The notes editor is a contenteditable that round-trips through plain text, so what you see is what gets saved.
+- The notes editor is a contenteditable numbered list that round-trips through plain text, so what you see is what gets saved.
 
 ## Files
 

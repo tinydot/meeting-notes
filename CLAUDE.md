@@ -43,7 +43,7 @@ Plain-text conventions in the notes editor that the parsers in `parseActions`, `
 - `!YYYY-MM-DD`, `!today`, `!tomorrow`, `!nextweek` → deadline on an action (expanded by `expandDeadlineShortcuts`)
 - `#tag` → tag
 
-The contenteditable layer round-trips through `textToHTML` / `htmlToText` so indent/outdent and list semantics are preserved as plain text on disk.
+The contenteditable layer round-trips through `textToHTML` / `htmlToText`: notes are a flat numbered list, one line per `<li>`, preserved as plain text on disk.
 
 ### UI structure
 

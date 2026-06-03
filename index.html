@@ -504,24 +504,6 @@
       text-align: right;
     }
 
-    .notes-editable ul {
-      list-style: none;
-      margin: 4px 0 0 0;
-      padding: 0;
-    }
-
-    .notes-editable ul li {
-      counter-increment: none;
-      padding-left: 20px;
-      margin-bottom: 4px;
-    }
-
-    .notes-editable ul li::before {
-      content: "–";
-      left: 0;
-      min-width: 12px;
-    }
-
     .inf-row {
       position: relative;
     }
@@ -1160,7 +1142,6 @@
             <div class="notes-editable" id="f-notes" contenteditable="true" spellcheck="true"></div>
           </div>
           <div class="hint">
-            <b>Tab</b> indent &nbsp;·&nbsp; <b>Shift+Tab</b> outdent &nbsp;·&nbsp;
             <b>@name task</b> → action &nbsp;·&nbsp; <b>→ text</b> or <b>** text</b> → decision &nbsp;·&nbsp;
             <b>!YYYY-MM-DD</b> → deadline &nbsp;·&nbsp; <b>!today</b> <b>!tomorrow</b> <b>!nextweek</b> → shortcuts &nbsp;·&nbsp; <b>#tag</b> → tag
           </div>
@@ -1617,80 +1598,38 @@
       function textToHTML(text) {
         if (!text.trim()) return '';
 
+        // Flat ordered list — one <li> per non-empty line. Leading tabs from
+        // legacy (indented) notes are stripped so old data flattens cleanly.
         const items = text.split('\n')
-          .map(line => ({
-            depth: (line.match(/^\t+/) || [''])[0].length,
-            content: line.replace(/^\t+/, '').trim(),
-          }))
-          .filter(item => item.content);
+          .map(line => line.replace(/^\t+/, '').trim())
+          .filter(Boolean);
 
         if (!items.length) return '';
 
-        // Recursively build nested list HTML.
-        // Children of a node at depth D are the consecutive items at depth D+1
-        // that appear before the next item at depth <= D.
-        function buildList(items, depth, tag) {
-          let html = `<${tag}>`;
-          let i = 0;
-          while (i < items.length) {
-            if (items[i].depth !== depth) { i++; continue; }
-            html += `<li>${esc(items[i].content)}`;
-            // Collect all items between this one and the next peer/ancestor
-            const children = [];
-            let j = i + 1;
-            while (j < items.length && items[j].depth > depth) {
-              children.push(items[j]);
-              j++;
-            }
-            if (children.length) html += buildList(children, depth + 1, 'ul');
-            html += '</li>';
-            i = j;
-          }
-          html += `</${tag}>`;
-          return html;
-        }
-
-        return buildList(items, 0, 'ol');
+        return '<ol>' + items.map(c => `<li>${esc(c)}</li>`).join('') + '</ol>';
       }
 
-      // Convert HTML list structure back to plain text
+      // Convert HTML list structure back to plain text. One line per <li>;
+      // any nested lists from legacy notes are flattened to top level.
       function htmlToText(html) {
         const temp = document.createElement('div');
         temp.innerHTML = html;
 
         const lines = [];
-        const processNode = (node, indent = '') => {
-          if (node.nodeType === Node.TEXT_NODE) {
-            const text = node.textContent.trim();
-            if (text) lines.push(indent + text);
-          } else if (node.tagName === 'LI') {
-            let text = '';
-            for (const child of node.childNodes) {
-              if (child.nodeType === Node.TEXT_NODE) {
-                text += child.textContent;
-              } else if (child.tagName === 'BR') {
-                text += '\n';
-              } else if (child.tagName !== 'UL' && child.tagName !== 'OL') {
-                text += child.textContent;
-              }
-            }
-            const trimmed = text.trim();
-            if (trimmed) lines.push(indent + trimmed);
-
-            // Process nested lists
-            for (const child of node.childNodes) {
-              if (child.tagName === 'UL' || child.tagName === 'OL') {
-                processNode(child, indent + '\t');
-              }
-            }
-          } else {
-            for (const child of node.childNodes) {
-              processNode(child, indent);
+        for (const li of temp.querySelectorAll('li')) {
+          let text = '';
+          for (const child of li.childNodes) {
+            if (child.nodeType === Node.TEXT_NODE) {
+              text += child.textContent;
+            } else if (child.tagName === 'BR') {
+              text += '\n';
+            } else if (child.tagName !== 'UL' && child.tagName !== 'OL') {
+              text += child.textContent;
             }
           }
-        };
-
-        processNode(temp, '');
+          const trimmed = text.trim();
+          if (trimmed) lines.push(trimmed);
+        }
         return lines.join('\n');
       }
 
@@ -1769,66 +1708,6 @@
             sel.addRange(newRange);
 
             elNotes.dispatchEvent(new Event('input'));
-          }
-        }
-
-        // Handle Tab: indent (create sublist)
-        if (e.key === 'Tab') {
-          e.preventDefault();
-          const sel = window.getSelection();
-          const currentLi = sel.anchorNode.nodeType === Node.TEXT_NODE
-            ? sel.anchorNode.parentElement.closest('li')
-            : sel.anchorNode.closest('li');
-
-          if (!currentLi) return;
-
-          if (e.shiftKey) {
-            // Shift+Tab: outdent
-            if (currentLi.parentElement.tagName === 'UL') {
-              const ul = currentLi.parentElement;
-              const parentLi = ul.parentElement;
-              if (parentLi && parentLi.tagName === 'LI') {
-                const savedAnchor = sel.anchorNode;
-                const savedOffset = sel.anchorOffset;
-                parentLi.parentElement.insertBefore(currentLi, parentLi.nextSibling);
-                if (ul.children.length === 0) ul.remove();
-                // Restore cursor after DOM manipulation (ul.remove() can invalidate selection)
-                const newRange = document.createRange();
-                try {
-                  newRange.setStart(savedAnchor, savedOffset);
-                } catch (_) {
-                  newRange.setStart(currentLi, 0);
-                }
-                newRange.collapse(true);
-                sel.removeAllRanges();
-                sel.addRange(newRange);
-                elNotes.dispatchEvent(new Event('input'));
-              }
-            }
-          } else {
-            // Tab: indent
-            const prevLi = currentLi.previousElementSibling;
-            if (prevLi && prevLi.tagName === 'LI') {
-              const savedAnchor = sel.anchorNode;
-              const savedOffset = sel.anchorOffset;
-              let ul = prevLi.querySelector(':scope > ul');
-              if (!ul) {
-                ul = document.createElement('ul');
-                prevLi.appendChild(ul);
-              }
-              ul.appendChild(currentLi);
-              // Restore cursor after DOM manipulation
-              const newRange = document.createRange();
-              try {
-                newRange.setStart(savedAnchor, savedOffset);
-              } catch (_) {
-                newRange.setStart(currentLi, 0);
-              }
-              newRange.collapse(true);
-              sel.removeAllRanges();
-              sel.addRange(newRange);
-              elNotes.dispatchEvent(new Event('input'));
-            }
           }
         }
       });
