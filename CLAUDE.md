@@ -57,7 +57,7 @@ Three tabs in the left rail driven by `switchTab(tab)`:
 
 ### Persistence + dirty tracking
 
-Two debounced savers (`scheduleSave` + `saveNote` for note body, `saveMeta` for title/date/time/category) write the whole root object back to IndexedDB. `setDirty` / `updateStatusBar` drive the status dot. `window.app` exposes the handful of functions referenced by inline `onclick=` attributes in the HTML — anything called from markup must be re-exported there.
+Two debounced savers (`scheduleSave` + `saveNote` for note body, `saveMeta` for title/date/time) write the whole root object back to IndexedDB. `setDirty` / `updateStatusBar` drive the status dot. `window.app` exposes the handful of functions referenced by inline `onclick=` attributes in the HTML — anything called from markup must be re-exported there.
 
 ### Offline / service worker
 

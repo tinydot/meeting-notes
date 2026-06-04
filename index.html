@@ -1124,10 +1124,6 @@
             <span class="ml">Time</span>
             <input type="time" class="mi" id="f-time">
           </div>
-          <div class="mf">
-            <span class="ml">Category</span>
-            <input type="text" class="mi" id="f-cat" placeholder="sprint, 1:1…" style="width:120px">
-          </div>
           <div class="meta-gap"></div>
           <button class="del-btn" onclick="app.confirmDelete()">delete</button>
         </div>
@@ -1186,7 +1182,7 @@
       // ── DATA STORE ──
       // Shape: { meetings: { [id]: Meeting }, actions: Action[], decisions: Decision[] }
       //
-      // Meeting:  { id, title, date, time, category, notes, createdAt, updatedAt }
+      // Meeting:  { id, title, date, time, notes, createdAt, updatedAt }
       // Action:   { meetingId, meetingTitle, meetingDate, owners: string[], text }
       // Decision: { meetingId, meetingTitle, meetingDate, text }
       //
@@ -1291,7 +1287,6 @@
       const elTitle = document.getElementById('f-title');
       const elDate = document.getElementById('f-date');
       const elTime = document.getElementById('f-time');
-      const elCat = document.getElementById('f-cat');
       const elInferred = document.getElementById('inferred');
       const elActSec = document.getElementById('act-sec');
       const elDecSec = document.getElementById('dec-sec');
@@ -1838,7 +1833,6 @@
             meetings = meetings.filter(m =>
               (m.title || '').toLowerCase().includes(q) ||
               (m.notes || '').toLowerCase().includes(q) ||
-              (m.category || '').toLowerCase().includes(q) ||
               (m.tags || []).some(t => t.includes(q))
             );
           }
@@ -1849,7 +1843,7 @@
           return;
         }
         elList.innerHTML = meetings.map(m => {
-          const sub = [m.date ? fmtDate(m.date) : '', m.category || ''].filter(Boolean).join(' · ');
+          const sub = m.date ? fmtDate(m.date) : '';
           const tags = m.tags || [];
           const tagHtml = tags.length
             ? `<div class="ni-tags">${tags.map(t => `<span class="tag-chip" onclick="event.stopPropagation();app.filterByTag('${esc(t)}')">#${esc(t)}</span>`).join('')}</div>`
@@ -1889,7 +1883,6 @@
         elTitle.value = m.title || '';
         elDate.value = m.date || '';
         elTime.value = m.time || '';
-        elCat.value = m.category || '';
 
         const notes = m.notes || '';
         elNotes.innerHTML = textToHTML(notes) || '<ol><li><br></li></ol>';
@@ -1912,7 +1905,7 @@
         const now = new Date();
         data.meetings[id] = {
           id,
-          title: '', notes: '', category: '',
+          title: '', notes: '',
           date: now.toISOString().slice(0, 10),
           time: now.toTimeString().slice(0, 5),
           createdAt: now.toISOString(),
@@ -1940,7 +1933,7 @@
         if (activeTab === 'actions') renderConsolidated('actions');
       }
 
-      // saveMeta: write title/date/time/category, reindex, redraw list.
+      // saveMeta: write title/date/time, reindex, redraw list.
       function saveMeta() {
         if (!currentId) return;
         const m = data.meetings[currentId];
@@ -1949,7 +1942,6 @@
         m.title = elTitle.value;
         m.date = elDate.value;
         m.time = elTime.value;
-        m.category = elCat.value;
         m.updatedAt = new Date().toISOString();
         indexMeeting(m);
         saveData();
@@ -1981,7 +1973,7 @@
       // Fix 2/9: separate timers for notes vs meta so neither cancels the other.
       // Fix 9: shared scheduler to avoid duplicating the debounce pattern.
       const noteTimer = { t: null };  // auto-save timer for notes text
-      const metaTimer = { t: null };  // auto-save timer for title/date/category
+      const metaTimer = { t: null };  // auto-save timer for title/date/time
 
       // Fix 9: single debounce implementation shared by both save paths
       function scheduleSave(timer, saveFn, arg) {
@@ -2071,7 +2063,7 @@
 
       elDelModal.addEventListener('click', e => { if (e.target === elDelModal) closeModal(); });
 
-      [elTitle, elDate, elTime, elCat].forEach(el => {
+      [elTitle, elDate, elTime].forEach(el => {
         el.addEventListener('input', markMetaDirty);
       });
 
