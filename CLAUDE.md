@@ -50,7 +50,7 @@ The contenteditable layer round-trips through `textToHTML` / `htmlToText`: notes
 Three tabs in the left rail driven by `switchTab(tab)`:
 
 - **Notes** — note list + editor in `<main>`.
-- **Actions** — `renderActionsByPerson` (sidebar grouping) and `renderActionsForPerson` / `renderAllActions` (table injected into `<main>` via `#actions-table-container`).
+- **Actions** — `actionsView.mode` selects the `<main>` view (all injected into `#actions-table-container`): `review` (default) → `renderReview`, `all` → `renderAllActions`, `detail` → `renderActionsForPerson`. `renderActionsByPerson` draws the sidebar, which always leads with a **Review** inbox + **All actions** nav. The Review inbox (`reviewItems` buckets open actions into Overdue / Due this week / No deadline) offers one-tap Done / Snooze 1w / Reschedule (`reviewDone` / `reviewSnooze` / `reviewReschedule`), each a line rewrite via `rewriteActionLine`. `updateReviewBadge` keeps the count pill on the Actions rail-tab in sync.
 - **Tags** — `renderTagsPanel` + `showTagNotes` (table injected via `#tags-table-container`).
 
 `switchTab` is responsible for showing/hiding the editor, empty state, and the dynamically inserted table containers — when adding a new tab or main-area view, mirror that show/hide bookkeeping or stale panels will leak across tabs.

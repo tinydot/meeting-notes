@@ -11,6 +11,7 @@ A tiny, offline-first meeting notes app. One HTML file, no build step, no depend
   - `→ text` or `** text` — decision
   - `!YYYY-MM-DD`, `!today`, `!tomorrow`, `!nextweek` — deadline on an action
   - `#tag` — tag
+- **Review inbox** that surfaces open action items by urgency (overdue / due this week / no deadline) with one-tap Done, Snooze, and Reschedule, plus a count badge on the Actions tab.
 - **Consolidated views** for Actions (grouped by person, with overdue counts) and Tags, derived live from your notes.
 - **Import / export** as JSON for backup or moving between devices.
 

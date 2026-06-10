@@ -142,6 +142,25 @@
       margin-bottom: -1px;
     }
 
+    .tab-badge {
+      display: inline-block;
+      margin-left: 5px;
+      min-width: 15px;
+      padding: 0 4px;
+      border-radius: 8px;
+      font-size: 9px;
+      line-height: 15px;
+      text-align: center;
+      vertical-align: middle;
+      background: #f0f0f0;
+      color: var(--muted);
+    }
+
+    .tab-badge-overdue {
+      background: #fde8e8;
+      color: #b33;
+    }
+
     .note-list {
       flex: 1;
       overflow-y: auto;
@@ -612,6 +631,82 @@
     .dl-upcoming {
       background: #f0f0f0;
       color: var(--muted);
+    }
+
+    .review-section {
+      margin-bottom: 26px;
+    }
+
+    .review-head {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 0.3px;
+      text-transform: uppercase;
+      margin: 0 0 8px;
+      padding-bottom: 6px;
+      border-bottom: 1px solid var(--faint);
+      cursor: default;
+    }
+
+    .review-overdue { color: #b33; }
+    .review-soon { color: #c47a00; }
+    .review-muted { color: var(--muted); cursor: pointer; }
+
+    .review-num {
+      font-size: 10px;
+      font-weight: 400;
+      color: var(--muted);
+      background: #f4f4f4;
+      border-radius: 8px;
+      padding: 0 7px;
+    }
+
+    details.review-section > summary { list-style: none; }
+    details.review-section > summary::-webkit-details-marker { display: none; }
+    details.review-section > summary::before {
+      content: '▸';
+      margin-right: 4px;
+      font-size: 10px;
+    }
+    details.review-section[open] > summary::before { content: '▾'; }
+
+    .rev-actions {
+      white-space: nowrap;
+      text-align: right;
+    }
+
+    .rev-btn {
+      font-family: var(--mono);
+      font-size: 10px;
+      padding: 3px 8px;
+      margin-left: 4px;
+      border: 1px solid var(--faint);
+      border-radius: 3px;
+      background: #fff;
+      color: var(--muted);
+      cursor: pointer;
+      transition: background 0.1s, color 0.1s, border-color 0.1s;
+    }
+
+    .rev-btn:hover {
+      background: #f4f4f4;
+      color: var(--fg);
+    }
+
+    .rev-done:hover {
+      background: #eaf6ea;
+      color: #2e7d32;
+      border-color: #cfe6cf;
+    }
+
+    .review-empty {
+      padding: 40px 20px;
+      text-align: center;
+      color: var(--muted);
+      font-size: 13px;
     }
 
     .person-item {
@@ -1316,7 +1411,7 @@
         // Hide table container when switching away from actions
         const tableContainer = document.getElementById('actions-table-container');
         if (tableContainer) {
-          tableContainer.style.display = (tab === 'actions' && (actionsView.mode === 'detail' || actionsView.mode === 'all')) ? 'block' : 'none';
+          tableContainer.style.display = (tab === 'actions' && actionsView.mode !== 'list') ? 'block' : 'none';
         }
 
         // Hide tags table container when switching away from tags
@@ -1367,13 +1462,30 @@
 
         const people = Object.keys(byPerson).sort((a, b) => a.toLowerCase().localeCompare(b.toLowerCase()));
 
+        // Top-level nav: Review inbox + All actions, always shown.
+        const { overdue, dueSoon } = reviewItems();
+        const reviewN = overdue.length + dueSoon.length;
+        const reviewBadge = reviewN
+          ? ` &nbsp;<span class="dl-badge ${overdue.length ? 'dl-overdue' : 'dl-today'}">${reviewN}</span>`
+          : '';
+        const openTotal = data.actions.filter(a => !a.isDone).length;
+        const navHtml = `
+      <div class="person-item${actionsView.mode === 'review' ? ' person-item-active' : ''}" onclick="app.showReview()">
+        <div class="person-name">⚑ Review${reviewBadge}</div>
+        <div class="person-count">${reviewN ? `${reviewN} need${reviewN === 1 ? 's' : ''} attention` : 'all clear'}</div>
+      </div>
+      <div class="person-item${actionsView.mode === 'all' ? ' person-item-active' : ''}" onclick="app.showAllActions()">
+        <div class="person-name">All actions</div>
+        <div class="person-count">${openTotal} open</div>
+      </div>`;
+
         if (!people.length) {
-          elListActions.innerHTML = '<div class="list-empty">no actions yet</div>';
+          elListActions.innerHTML = navHtml;
           return;
         }
 
         const today = new Date().toISOString().slice(0, 10);
-        elListActions.innerHTML = people.map(person => {
+        elListActions.innerHTML = navHtml + people.map(person => {
           const actions = byPerson[person];
           const openCount = actions.filter(a => !a.isDone).length;
           const doneCount = actions.filter(a => a.isDone).length;
@@ -1552,13 +1664,17 @@
       }
 
       // Track current view state for actions tab
-      let actionsView = { mode: 'all', selectedPerson: null };
+      // Default to the Review inbox so opening Actions lands on what's due.
+      let actionsView = { mode: 'review', selectedPerson: null };
 
       // Track current view state for tags tab
       let tagsView = { mode: 'list', selectedTag: null };
 
       function renderConsolidated(type) {
-        if (actionsView.mode === 'all') {
+        if (actionsView.mode === 'review') {
+          renderActionsByPerson();
+          renderReview();
+        } else if (actionsView.mode === 'all') {
           renderActionsByPerson();
           renderAllActions();
         } else if (actionsView.mode === 'list') {
@@ -1570,7 +1686,8 @@
       }
 
       elFilterActions.addEventListener('input', () => {
-        if (actionsView.mode === 'all') { renderActionsByPerson(); renderAllActions(); }
+        if (actionsView.mode === 'review') { renderActionsByPerson(); renderReview(); }
+        else if (actionsView.mode === 'all') { renderActionsByPerson(); renderAllActions(); }
         else if (actionsView.mode === 'list') renderActionsByPerson();
         else renderActionsForPerson(actionsView.selectedPerson);
       });
@@ -1821,6 +1938,7 @@
 
       // ── SIDEBAR NOTE LIST ──
       function renderList() {
+        updateReviewBadge();
         const q = elSearch.value.toLowerCase().trim();
         let meetings = Object.values(data.meetings)
           .sort((a, b) => (b.updatedAt || '').localeCompare(a.updatedAt || ''));
@@ -1930,6 +2048,7 @@
         indexMeeting(m);
         saveData();
         if (!metaTimer.t) setDirty(false);
+        updateReviewBadge();
         if (activeTab === 'actions') renderConsolidated('actions');
       }
 
@@ -2273,7 +2392,8 @@
 
       window.app = {
         confirmDelete, closeModal, doDelete, newNote, openNote, exportData, importData,
-        closeAction, closeActionFromTable, showPersonActions, showPersonList, filterByTag
+        closeAction, closeActionFromTable, showPersonActions, showPersonList, filterByTag,
+        showReview, showAllActions, reviewDone, reviewSnooze, reviewReschedule
       };
 
       function showPersonActions(person) {
@@ -2286,6 +2406,169 @@
         actionsView = { mode: 'all', selectedPerson: null };
         renderActionsByPerson();
         renderAllActions();
+      }
+      function showAllActions() { showPersonList(); }
+
+      function showReview() {
+        actionsView = { mode: 'review', selectedPerson: null };
+        renderActionsByPerson();
+        renderReview();
+      }
+
+      // ── REVIEW INBOX ──
+      // Split open actions into urgency buckets for frictionless review.
+      function reviewItems() {
+        const today = new Date().toISOString().slice(0, 10);
+        const wk = new Date(); wk.setDate(wk.getDate() + 7);
+        const weekOut = wk.toISOString().slice(0, 10);
+        const overdue = [], dueSoon = [], noDate = [];
+        for (const a of data.actions) {
+          if (a.isDone) continue;
+          if (a.deadline && a.deadline < today) overdue.push(a);
+          else if (a.deadline && a.deadline <= weekOut) dueSoon.push(a);
+          else if (!a.deadline) noDate.push(a);
+        }
+        const byDeadline = (x, y) => x.deadline.localeCompare(y.deadline);
+        overdue.sort(byDeadline);
+        dueSoon.sort(byDeadline);
+        return { overdue, dueSoon, noDate };
+      }
+
+      // Red pill on the Actions rail-tab showing how many items need review.
+      function updateReviewBadge() {
+        const tab = document.querySelector('.rail-tab[data-tab="actions"]');
+        if (!tab) return;
+        const { overdue, dueSoon } = reviewItems();
+        const n = overdue.length + dueSoon.length;
+        let badge = tab.querySelector('.tab-badge');
+        if (!n) { if (badge) badge.remove(); return; }
+        if (!badge) {
+          badge = document.createElement('span');
+          badge.className = 'tab-badge';
+          tab.appendChild(badge);
+        }
+        badge.textContent = n;
+        badge.classList.toggle('tab-badge-overdue', overdue.length > 0);
+      }
+
+      function reviewRow(a) {
+        const owners = a.owners.map(o => '@' + esc(o)).join(', ');
+        const mid = esc(a.meetingId), full = esc(a.fullText);
+        const snooze = a.deadline
+          ? `<button class="rev-btn" data-mid="${mid}" data-full="${full}" onclick="event.stopPropagation();app.reviewSnooze(this)">Snooze 1w</button>`
+          : '';
+        return `
+      <tr onclick="app.openNote('${a.meetingId}', true)">
+        <td class="action-text">${esc(a.text)}</td>
+        <td class="action-owners">${owners}</td>
+        <td>${deadlineBadge(a.deadline)}</td>
+        <td class="meeting-title">${esc(a.meetingTitle || 'Untitled')}</td>
+        <td class="rev-actions">
+          <button class="rev-btn rev-done" data-mid="${mid}" data-full="${full}" onclick="event.stopPropagation();app.reviewDone(this)">Done</button>
+          ${snooze}
+          <button class="rev-btn" data-mid="${mid}" data-full="${full}" onclick="event.stopPropagation();app.reviewReschedule(this)">Reschedule</button>
+        </td>
+      </tr>`;
+      }
+
+      function renderReview() {
+        const { overdue, dueSoon, noDate } = reviewItems();
+        elEmpty.style.display = 'none';
+        elEditor.style.display = 'none';
+
+        const openSection = (title, cls, items) => items.length ? `
+    <div class="review-section">
+      <h3 class="review-head ${cls}">${title} <span class="review-num">${items.length}</span></h3>
+      <table class="actions-table"><tbody>${items.map(reviewRow).join('')}</tbody></table>
+    </div>` : '';
+
+        const noDateSection = noDate.length ? `
+    <details class="review-section">
+      <summary class="review-head review-muted">No deadline <span class="review-num">${noDate.length}</span></summary>
+      <table class="actions-table"><tbody>${noDate.map(reviewRow).join('')}</tbody></table>
+    </details>` : '';
+
+        let html;
+        if (!overdue.length && !dueSoon.length && !noDate.length) {
+          html = `<div class="review-empty">✓ Nothing to review — all caught up.</div>`;
+        } else {
+          html = `
+    <div class="actions-table-wrap">
+      <div class="actions-table-header">
+        <h2>Review</h2>
+        <span class="actions-count">${overdue.length + dueSoon.length} need attention</span>
+      </div>
+      ${openSection('Overdue', 'review-overdue', overdue)}
+      ${openSection('Due this week', 'review-soon', dueSoon)}
+      ${noDateSection}
+    </div>`;
+        }
+
+        const main = document.querySelector('.main');
+        let c = document.getElementById('actions-table-container');
+        if (!c) {
+          c = document.createElement('div');
+          c.id = 'actions-table-container';
+          c.className = 'actions-table-container';
+          main.appendChild(c);
+        }
+        c.innerHTML = html;
+        c.style.display = 'block';
+      }
+
+      // Find the note line for an action and apply a transform, then persist + refresh.
+      function rewriteActionLine(meetingId, fullText, transform) {
+        const meeting = data.meetings[meetingId];
+        if (!meeting) return false;
+        const lines = meeting.notes.split('\n');
+        const idx = lines.findIndex(line => line.replace(/^\t+/, '').trim().includes(fullText));
+        if (idx < 0) return false;
+        lines[idx] = transform(lines[idx]);
+        meeting.notes = lines.join('\n');
+        meeting.updatedAt = new Date().toISOString();
+        indexMeeting(meeting);
+        saveData();
+        if (currentId === meetingId) {
+          elNotes.innerHTML = textToHTML(meeting.notes);
+          const acts = parseActions(meeting.notes);
+          const decs = parseDecisions(meeting.notes);
+          updateInferred(acts, decs);
+          updateStatusBar(meeting.date, acts, decs);
+        }
+        return true;
+      }
+
+      function refreshReview() {
+        renderActionsByPerson();
+        renderReview();
+        updateReviewBadge();
+      }
+
+      function reviewDone(btn) {
+        const today = new Date().toISOString().slice(0, 10);
+        if (rewriteActionLine(btn.dataset.mid, btn.dataset.full, l => `${l} [done: ${today}]`)) {
+          refreshReview();
+          showToast('marked done');
+        }
+      }
+
+      function setReviewDeadline(mid, full, date, toast) {
+        const ok = rewriteActionLine(mid, full, l =>
+          /!\d{4}-\d{2}-\d{2}/.test(l) ? l.replace(/!\d{4}-\d{2}-\d{2}/, '!' + date) : `${l} !${date}`);
+        if (ok) { refreshReview(); showToast(toast); }
+      }
+
+      function reviewSnooze(btn) {
+        const d = new Date(); d.setDate(d.getDate() + 7);
+        setReviewDeadline(btn.dataset.mid, btn.dataset.full, d.toISOString().slice(0, 10), 'snoozed 1 week');
+      }
+
+      function reviewReschedule(btn) {
+        const input = prompt('New deadline (YYYY-MM-DD):', new Date().toISOString().slice(0, 10));
+        if (input === null) return;
+        const v = input.trim();
+        if (!/^\d{4}-\d{2}-\d{2}$/.test(v)) { showToast('use YYYY-MM-DD'); return; }
+        setReviewDeadline(btn.dataset.mid, btn.dataset.full, v, 'rescheduled');
       }
 
       // Register service worker for offline support
