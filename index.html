@@ -2545,8 +2545,11 @@
       }
 
       function reviewDone(btn) {
-        const today = new Date().toISOString().slice(0, 10);
-        if (rewriteActionLine(btn.dataset.mid, btn.dataset.full, l => `${l} [done: ${today}]`)) {
+        // Match the existing Mark-done buttons: capture a closure note and
+        // store it inline as the action's [done: …] marker.
+        const note = prompt('Closure note:', '');
+        if (note === null) return;
+        if (rewriteActionLine(btn.dataset.mid, btn.dataset.full, l => `${l} [done: ${note}]`)) {
           refreshReview();
           showToast('marked done');
         }
