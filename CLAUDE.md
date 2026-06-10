@@ -43,21 +43,21 @@ Plain-text conventions in the notes editor that the parsers in `parseActions`, `
 - `!YYYY-MM-DD`, `!today`, `!tomorrow`, `!nextweek` → deadline on an action (expanded by `expandDeadlineShortcuts`)
 - `#tag` → tag
 
-The contenteditable layer round-trips through `textToHTML` / `htmlToText` so indent/outdent and list semantics are preserved as plain text on disk.
+The contenteditable layer round-trips through `textToHTML` / `htmlToText`: notes are a flat numbered list, one line per `<li>`, preserved as plain text on disk.
 
 ### UI structure
 
 Three tabs in the left rail driven by `switchTab(tab)`:
 
 - **Notes** — note list + editor in `<main>`.
-- **Actions** — `renderActionsByPerson` (sidebar grouping) and `renderActionsForPerson` / `renderAllActions` (table injected into `<main>` via `#actions-table-container`).
+- **Actions** — `actionsView.mode` selects the `<main>` view (all injected into `#actions-table-container`): `review` (default) → `renderReview`, `all` → `renderAllActions`, `detail` → `renderActionsForPerson`. `renderActionsByPerson` draws the sidebar, which always leads with a **Review** inbox + **All actions** nav. The Review inbox (`reviewItems` buckets open actions into Overdue / Due this week / No deadline) offers one-tap Done / Snooze 1w / Reschedule (`reviewDone` / `reviewSnooze` / `reviewReschedule`), each a line rewrite via `rewriteActionLine`. `updateReviewBadge` keeps the count pill on the Actions rail-tab in sync.
 - **Tags** — `renderTagsPanel` + `showTagNotes` (table injected via `#tags-table-container`).
 
 `switchTab` is responsible for showing/hiding the editor, empty state, and the dynamically inserted table containers — when adding a new tab or main-area view, mirror that show/hide bookkeeping or stale panels will leak across tabs.
 
 ### Persistence + dirty tracking
 
-Two debounced savers (`scheduleSave` + `saveNote` for note body, `saveMeta` for title/date/time/category) write the whole root object back to IndexedDB. `setDirty` / `updateStatusBar` drive the status dot. `window.app` exposes the handful of functions referenced by inline `onclick=` attributes in the HTML — anything called from markup must be re-exported there.
+Two debounced savers (`scheduleSave` + `saveNote` for note body, `saveMeta` for title/date/time) write the whole root object back to IndexedDB. `setDirty` / `updateStatusBar` drive the status dot. `window.app` exposes the handful of functions referenced by inline `onclick=` attributes in the HTML — anything called from markup must be re-exported there.
 
 ### Offline / service worker
 
