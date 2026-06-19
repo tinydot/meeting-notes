@@ -3,7 +3,11 @@
 
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="color-scheme" content="light">
+  <meta name="theme-color" content="#fefefe">
+  <meta name="description" content="Minutes — an offline-first meeting notes app.">
+  <link rel="manifest" href="./manifest.webmanifest">
   <title>Minutes</title>
   <link
     href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,500;1,400&family=JetBrains+Mono:wght@300;400&display=swap"
@@ -41,6 +45,7 @@
     .shell {
       display: flex;
       height: 100vh;
+      height: 100dvh;
     }
 
     /* ── RAIL ── */
@@ -770,6 +775,8 @@
     .actions-table-container {
       flex: 1;
       overflow-y: auto;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
       padding: 32px 44px;
       display: none;
       /* hidden by default */
@@ -1166,6 +1173,40 @@
 
     .notes-editable:focus-visible {
       outline-offset: 4px;
+    }
+
+    /* ── RESPONSIVE ──
+       Wide layout is the two-pane default. Below 900px the generous 44px
+       gutters tighten; below 640px the rail stacks above the editor as a
+       capped, scrollable region so both panes fit a phone. */
+    @media (max-width: 900px) {
+      .rail { width: 180px; min-width: 180px; }
+      .meta-bar { padding: 0 20px; }
+      .title-wrap { padding: 22px 20px 0; }
+      .scroller { padding: 16px 20px 40px; }
+      .statusbar { padding: 5px 20px; }
+      .actions-table-container { padding: 24px 20px; }
+    }
+
+    @media (max-width: 640px) {
+      .shell { flex-direction: column; }
+      .rail {
+        width: 100%;
+        min-width: 0;
+        max-height: 42vh;
+        border-right: none;
+        border-bottom: 1px solid var(--faint);
+      }
+      .main { min-height: 0; }
+      /* Reveal hover-only row controls on touch (no :hover to trigger them) */
+      .inf-close-btn,
+      .con-close-btn { opacity: 1; }
+      .title-inp { font-size: 22px; }
+    }
+
+    @media (hover: none) {
+      .inf-close-btn,
+      .con-close-btn { opacity: 1; }
     }
 
     /* ── REDUCED MOTION ── */
