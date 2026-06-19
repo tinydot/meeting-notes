@@ -20,12 +20,12 @@
     :root {
       --bg: #fefefe;
       --fg: #1c1c1c;
-      --muted: #999;
-      --faint: #e2e2e2;
+      --muted: #6b6b6b;   /* secondary text — meets 4.5:1 on --bg */
+      --subtle: #8a8a8a;  /* placeholders / hints / quiet labels */
+      --faint: #dcdcdc;   /* hairline borders only */
       --mono: 'JetBrains Mono', monospace;
       --serif: 'Lora', serif;
       --r: 3px;
-      --line-h: 2.0;
       --font-sz: 13px;
     }
 
@@ -104,7 +104,7 @@
     }
 
     .search-box input::placeholder {
-      color: var(--faint);
+      color: var(--subtle);
     }
 
     .search-box input:focus {
@@ -222,7 +222,7 @@
     .list-empty {
       padding: 20px 18px;
       font-size: 11px;
-      color: var(--faint);
+      color: var(--subtle);
     }
 
     /* consolidated panels */
@@ -267,14 +267,11 @@
     }
 
     .con-filter input::placeholder {
-      color: var(--faint);
+      color: var(--subtle);
     }
 
     .con-filter input:focus {
       border-color: var(--muted);
-    }
-
-    .con-list {
     }
 
     .con-item {
@@ -348,7 +345,7 @@
       align-items: center;
       justify-content: center;
       font-size: 11px;
-      color: var(--faint);
+      color: var(--subtle);
     }
 
     .editor {
@@ -385,7 +382,7 @@
       font-size: 9px;
       letter-spacing: 1.2px;
       text-transform: uppercase;
-      color: var(--faint);
+      color: var(--subtle);
     }
 
     .mi {
@@ -399,7 +396,7 @@
     }
 
     .mi::placeholder {
-      color: var(--faint);
+      color: var(--subtle);
     }
 
     input[type=date].mi,
@@ -416,7 +413,7 @@
       border: none;
       font-family: var(--mono);
       font-size: 10px;
-      color: var(--faint);
+      color: var(--subtle);
       cursor: pointer;
       padding: 4px 6px;
       border-radius: var(--r);
@@ -448,7 +445,7 @@
     }
 
     .title-inp::placeholder {
-      color: var(--faint);
+      color: var(--subtle);
       font-style: italic;
     }
 
@@ -472,7 +469,7 @@
       font-size: 9px;
       letter-spacing: 1.5px;
       text-transform: uppercase;
-      color: var(--faint);
+      color: var(--subtle);
       margin-bottom: 10px;
       margin-top: 22px;
     }
@@ -494,7 +491,7 @@
 
     .notes-editable:empty::before {
       content: attr(data-placeholder);
-      color: var(--faint);
+      color: var(--subtle);
       font-style: italic;
     }
 
@@ -896,7 +893,7 @@
     /* hint */
     .hint {
       font-size: 10px;
-      color: var(--faint);
+      color: var(--subtle);
       line-height: 1.9;
       margin-top: 6px;
       font-style: italic;
@@ -963,7 +960,7 @@
       padding: 5px 44px;
       border-top: 1px solid var(--faint);
       font-size: 10px;
-      color: var(--faint);
+      color: var(--subtle);
       display: flex;
       gap: 12px;
       align-items: center;
@@ -1158,6 +1155,29 @@
       background: var(--fg);
       border-radius: 2px;
     }
+
+    /* ── FOCUS ── keyboard focus ring (placed last so it overrides the
+       per-element `outline: none` resets on inputs and the editor) */
+    *:focus-visible {
+      outline: 2px solid var(--fg);
+      outline-offset: 1px;
+      border-radius: var(--r);
+    }
+
+    .notes-editable:focus-visible {
+      outline-offset: 4px;
+    }
+
+    /* ── REDUCED MOTION ── */
+    @media (prefers-reduced-motion: reduce) {
+      *,
+      *::before,
+      *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+      }
+    }
   </style>
 </head>
 
@@ -1174,10 +1194,10 @@
       <div class="search-box">
         <input type="text" id="search" placeholder="search…">
       </div>
-      <div class="rail-tabs">
-        <button class="rail-tab active" data-tab="notes">Notes</button>
-        <button class="rail-tab" data-tab="actions">Actions</button>
-        <button class="rail-tab" data-tab="tags">Tags</button>
+      <div class="rail-tabs" role="tablist" aria-label="Views">
+        <button class="rail-tab active" data-tab="notes" role="tab" aria-selected="true">Notes</button>
+        <button class="rail-tab" data-tab="actions" role="tab" aria-selected="false">Actions</button>
+        <button class="rail-tab" data-tab="tags" role="tab" aria-selected="false">Tags</button>
       </div>
 
       <div class="note-list visible" id="note-list"></div>
@@ -1401,9 +1421,11 @@
 
       function switchTab(tab) {
         activeTab = tab;
-        document.querySelectorAll('.rail-tab').forEach(b =>
-          b.classList.toggle('active', b.dataset.tab === tab)
-        );
+        document.querySelectorAll('.rail-tab').forEach(b => {
+          const on = b.dataset.tab === tab;
+          b.classList.toggle('active', on);
+          b.setAttribute('aria-selected', on ? 'true' : 'false');
+        });
         elList.classList.toggle('visible', tab === 'notes');
         elConActions.classList.toggle('visible', tab === 'actions');
         elConTags.classList.toggle('visible', tab === 'tags');
@@ -2448,6 +2470,7 @@
           tab.appendChild(badge);
         }
         badge.textContent = n;
+        badge.setAttribute('aria-label', `${n} action${n === 1 ? '' : 's'} need attention`);
         badge.classList.toggle('tab-badge-overdue', overdue.length > 0);
       }
 
