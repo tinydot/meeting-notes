@@ -1055,6 +1055,28 @@
       line-height: 1.7;
     }
 
+    .modal-input {
+      width: 100%;
+      border: 1px solid var(--faint);
+      border-radius: var(--r);
+      background: transparent;
+      padding: 8px 10px;
+      margin-bottom: 20px;
+      font-family: var(--mono);
+      font-size: 12px;
+      color: var(--fg);
+      outline: none;
+      transition: border-color 0.12s;
+    }
+
+    .modal-input::placeholder {
+      color: var(--subtle);
+    }
+
+    .modal-input:focus {
+      border-color: var(--muted);
+    }
+
     .modal-btns {
       display: flex;
       gap: 8px;
@@ -1325,6 +1347,18 @@
       <div class="modal-btns">
         <button class="mb" onclick="app.closeModal()">cancel</button>
         <button class="mb p" onclick="app.doDelete()">delete</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- generic input modal (closure notes / reschedule) -->
+  <div class="overlay" id="input-modal">
+    <div class="modal">
+      <h3 id="im-title">—</h3>
+      <input class="modal-input" id="im-input" autocomplete="off">
+      <div class="modal-btns">
+        <button class="mb" id="im-cancel">cancel</button>
+        <button class="mb p" id="im-ok">ok</button>
       </div>
     </div>
   </div>
@@ -2135,6 +2169,47 @@
       function confirmDelete() { elDelModal.classList.add('open'); }
       function closeModal() { elDelModal.classList.remove('open'); }
 
+      // ── INPUT MODAL ──
+      // Styled replacement for window.prompt(). Resolves to the entered
+      // string, or null if cancelled (Escape / cancel / backdrop click).
+      const elInputModal = document.getElementById('input-modal');
+      const elImTitle = document.getElementById('im-title');
+      const elImInput = document.getElementById('im-input');
+      const elImOk = document.getElementById('im-ok');
+      const elImCancel = document.getElementById('im-cancel');
+      let _imResolve = null;
+
+      function inputModal({ title, type = 'text', initial = '', placeholder = '', confirmText = 'ok' }) {
+        return new Promise(resolve => {
+          _imResolve = resolve;
+          elImTitle.textContent = title;
+          elImInput.type = type;
+          elImInput.value = initial;
+          elImInput.placeholder = placeholder;
+          elImOk.textContent = confirmText;
+          elInputModal.classList.add('open');
+          requestAnimationFrame(() => {
+            elImInput.focus();
+            if (type === 'text') elImInput.select();
+          });
+        });
+      }
+
+      function resolveInputModal(val) {
+        if (!_imResolve) return;
+        elInputModal.classList.remove('open');
+        const done = _imResolve; _imResolve = null;
+        done(val);
+      }
+
+      elImOk.addEventListener('click', () => resolveInputModal(elImInput.value));
+      elImCancel.addEventListener('click', () => resolveInputModal(null));
+      elInputModal.addEventListener('click', e => { if (e.target === elInputModal) resolveInputModal(null); });
+      elImInput.addEventListener('keydown', e => {
+        if (e.key === 'Enter') { e.preventDefault(); resolveInputModal(elImInput.value); }
+        else if (e.key === 'Escape') { e.preventDefault(); resolveInputModal(null); }
+      });
+
       function doDelete() {
         if (!currentId) return;
         clearTimeout(noteTimer.t); clearTimeout(metaTimer.t);
@@ -2280,11 +2355,11 @@
 
 
       // ── CLOSE ACTION ──
-      function closeAction(btn) {
+      async function closeAction(btn) {
         const fullText = btn.dataset.fulltext;
         if (!fullText) return;
 
-        const note = prompt('Closure note:', '');
+        const note = await inputModal({ title: 'Mark action done', placeholder: 'Closure note (optional)', confirmText: 'Mark done' });
         if (note === null) return; // cancelled
 
         const meeting = data.meetings[currentId];
@@ -2321,8 +2396,8 @@
         }
       }
 
-      function closeActionFromTable(btn, meetingId) {
-        const note = prompt('Closure note:', '');
+      async function closeActionFromTable(btn, meetingId) {
+        const note = await inputModal({ title: 'Mark action done', placeholder: 'Closure note (optional)', confirmText: 'Mark done' });
         if (note === null) return;
 
         const actionData = JSON.parse(btn.dataset.action);
@@ -2608,10 +2683,10 @@
         updateReviewBadge();
       }
 
-      function reviewDone(btn) {
+      async function reviewDone(btn) {
         // Match the existing Mark-done buttons: capture a closure note and
         // store it inline as the action's [done: …] marker.
-        const note = prompt('Closure note:', '');
+        const note = await inputModal({ title: 'Mark action done', placeholder: 'Closure note (optional)', confirmText: 'Mark done' });
         if (note === null) return;
         if (rewriteActionLine(btn.dataset.mid, btn.dataset.full, l => `${l} [done: ${note}]`)) {
           refreshReview();
@@ -2630,11 +2705,14 @@
         setReviewDeadline(btn.dataset.mid, btn.dataset.full, d.toISOString().slice(0, 10), 'snoozed 1 week');
       }
 
-      function reviewReschedule(btn) {
-        const input = prompt('New deadline (YYYY-MM-DD):', new Date().toISOString().slice(0, 10));
+      async function reviewReschedule(btn) {
+        const input = await inputModal({
+          title: 'Reschedule deadline', type: 'date',
+          initial: new Date().toISOString().slice(0, 10), confirmText: 'Set deadline',
+        });
         if (input === null) return;
-        const v = input.trim();
-        if (!/^\d{4}-\d{2}-\d{2}$/.test(v)) { showToast('use YYYY-MM-DD'); return; }
+        const v = (input || '').trim();
+        if (!/^\d{4}-\d{2}-\d{2}$/.test(v)) { showToast('pick a valid date'); return; }
         setReviewDeadline(btn.dataset.mid, btn.dataset.full, v, 'rescheduled');
       }
 
