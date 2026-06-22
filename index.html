@@ -3,7 +3,12 @@
 
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="color-scheme" content="light dark">
+  <meta name="theme-color" content="#fefefe" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#1a1a1a" media="(prefers-color-scheme: dark)">
+  <meta name="description" content="Minutes — an offline-first meeting notes app.">
+  <link rel="manifest" href="./manifest.webmanifest">
   <title>Minutes</title>
   <link
     href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,500;1,400&family=JetBrains+Mono:wght@300;400&display=swap"
@@ -20,13 +25,37 @@
     :root {
       --bg: #fefefe;
       --fg: #1c1c1c;
-      --muted: #999;
-      --faint: #e2e2e2;
+      --muted: #6b6b6b;   /* secondary text — meets 4.5:1 on --bg */
+      --subtle: #8a8a8a;  /* placeholders / hints / quiet labels */
+      --faint: #dcdcdc;   /* hairline borders only */
+      --surface-hover: var(--surface-hover);
+      --surface-active: var(--surface-active);
+      --chip: var(--chip);
+      --over-bg: var(--over-bg);  /* overdue / alert */
+      --over-fg: var(--over-fg);
+      --soon-bg: var(--soon-bg);  /* due soon / warning */
+      --soon-fg: var(--soon-fg);
       --mono: 'JetBrains Mono', monospace;
       --serif: 'Lora', serif;
       --r: 3px;
-      --line-h: 2.0;
       --font-sz: 13px;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #1a1a1a;
+        --fg: #e8e8e8;
+        --muted: #9a9a9a;
+        --subtle: #777;
+        --faint: #333;
+        --surface-hover: #242424;
+        --surface-active: #2c2c2c;
+        --chip: #2a2a2a;
+        --over-bg: #3a2222;
+        --over-fg: #e88;
+        --soon-bg: #3a3320;
+        --soon-fg: #e0b056;
+      }
     }
 
     html,
@@ -41,6 +70,7 @@
     .shell {
       display: flex;
       height: 100vh;
+      height: 100dvh;
     }
 
     /* ── RAIL ── */
@@ -104,7 +134,7 @@
     }
 
     .search-box input::placeholder {
-      color: var(--faint);
+      color: var(--subtle);
     }
 
     .search-box input:focus {
@@ -152,13 +182,13 @@
       line-height: 15px;
       text-align: center;
       vertical-align: middle;
-      background: #f0f0f0;
+      background: var(--chip);
       color: var(--muted);
     }
 
     .tab-badge-overdue {
-      background: #fde8e8;
-      color: #b33;
+      background: var(--over-bg);
+      color: var(--over-fg);
     }
 
     .note-list {
@@ -188,11 +218,11 @@
     }
 
     .ni:hover {
-      background: #f8f8f8;
+      background: var(--surface-hover);
     }
 
     .ni.active {
-      background: #f4f4f4;
+      background: var(--surface-active);
     }
 
     .ni.active::before {
@@ -222,7 +252,7 @@
     .list-empty {
       padding: 20px 18px;
       font-size: 11px;
-      color: var(--faint);
+      color: var(--subtle);
     }
 
     /* consolidated panels */
@@ -267,14 +297,11 @@
     }
 
     .con-filter input::placeholder {
-      color: var(--faint);
+      color: var(--subtle);
     }
 
     .con-filter input:focus {
       border-color: var(--muted);
-    }
-
-    .con-list {
     }
 
     .con-item {
@@ -285,7 +312,7 @@
     }
 
     .con-item:hover {
-      background: #f8f8f8;
+      background: var(--surface-hover);
     }
 
     .con-item-text {
@@ -348,7 +375,7 @@
       align-items: center;
       justify-content: center;
       font-size: 11px;
-      color: var(--faint);
+      color: var(--subtle);
     }
 
     .editor {
@@ -385,7 +412,7 @@
       font-size: 9px;
       letter-spacing: 1.2px;
       text-transform: uppercase;
-      color: var(--faint);
+      color: var(--subtle);
     }
 
     .mi {
@@ -399,7 +426,7 @@
     }
 
     .mi::placeholder {
-      color: var(--faint);
+      color: var(--subtle);
     }
 
     input[type=date].mi,
@@ -416,7 +443,7 @@
       border: none;
       font-family: var(--mono);
       font-size: 10px;
-      color: var(--faint);
+      color: var(--subtle);
       cursor: pointer;
       padding: 4px 6px;
       border-radius: var(--r);
@@ -424,7 +451,7 @@
     }
 
     .del-btn:hover {
-      color: #b33;
+      color: var(--over-fg);
     }
 
     /* title */
@@ -448,7 +475,7 @@
     }
 
     .title-inp::placeholder {
-      color: var(--faint);
+      color: var(--subtle);
       font-style: italic;
     }
 
@@ -472,7 +499,7 @@
       font-size: 9px;
       letter-spacing: 1.5px;
       text-transform: uppercase;
-      color: var(--faint);
+      color: var(--subtle);
       margin-bottom: 10px;
       margin-top: 22px;
     }
@@ -494,7 +521,7 @@
 
     .notes-editable:empty::before {
       content: attr(data-placeholder);
-      color: var(--faint);
+      color: var(--subtle);
       font-style: italic;
     }
 
@@ -619,17 +646,17 @@
     }
 
     .dl-overdue {
-      background: #fde8e8;
-      color: #b33;
+      background: var(--over-bg);
+      color: var(--over-fg);
     }
 
     .dl-today {
-      background: #fff3cd;
-      color: #c47a00;
+      background: var(--soon-bg);
+      color: var(--soon-fg);
     }
 
     .dl-upcoming {
-      background: #f0f0f0;
+      background: var(--chip);
       color: var(--muted);
     }
 
@@ -651,15 +678,15 @@
       cursor: default;
     }
 
-    .review-overdue { color: #b33; }
-    .review-soon { color: #c47a00; }
+    .review-overdue { color: var(--over-fg); }
+    .review-soon { color: var(--soon-fg); }
     .review-muted { color: var(--muted); cursor: pointer; }
 
     .review-num {
       font-size: 10px;
       font-weight: 400;
       color: var(--muted);
-      background: #f4f4f4;
+      background: var(--surface-active);
       border-radius: 8px;
       padding: 0 7px;
     }
@@ -685,14 +712,14 @@
       margin-left: 4px;
       border: 1px solid var(--faint);
       border-radius: 3px;
-      background: #fff;
+      background: var(--bg);
       color: var(--muted);
       cursor: pointer;
       transition: background 0.1s, color 0.1s, border-color 0.1s;
     }
 
     .rev-btn:hover {
-      background: #f4f4f4;
+      background: var(--surface-active);
       color: var(--fg);
     }
 
@@ -700,6 +727,14 @@
       background: #eaf6ea;
       color: #2e7d32;
       border-color: #cfe6cf;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      .rev-done:hover {
+        background: #1f3322;
+        color: #7ec98a;
+        border-color: #2f5236;
+      }
     }
 
     .review-empty {
@@ -717,11 +752,11 @@
     }
 
     .person-item:hover {
-      background: #f8f8f8;
+      background: var(--surface-hover);
     }
 
     .person-item-active {
-      background: #f4f4f4;
+      background: var(--surface-active);
       position: relative;
     }
 
@@ -765,7 +800,7 @@
       border-bottom: 1px solid var(--faint);
       font-size: 12px;
       font-weight: 500;
-      background: #f8f8f8;
+      background: var(--surface-hover);
     }
 
 
@@ -773,6 +808,8 @@
     .actions-table-container {
       flex: 1;
       overflow-y: auto;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
       padding: 32px 44px;
       display: none;
       /* hidden by default */
@@ -834,7 +871,7 @@
     }
 
     .actions-table tbody tr:hover {
-      background: #f8f8f8;
+      background: var(--surface-hover);
     }
 
     .actions-table tbody tr.row-done {
@@ -896,7 +933,7 @@
     /* hint */
     .hint {
       font-size: 10px;
-      color: var(--faint);
+      color: var(--subtle);
       line-height: 1.9;
       margin-top: 6px;
       font-style: italic;
@@ -963,7 +1000,7 @@
       padding: 5px 44px;
       border-top: 1px solid var(--faint);
       font-size: 10px;
-      color: var(--faint);
+      color: var(--subtle);
       display: flex;
       gap: 12px;
       align-items: center;
@@ -1011,6 +1048,26 @@
       transform: translateX(-50%) translateY(0);
     }
 
+    .toast-btn {
+      margin-left: 14px;
+      padding: 0;
+      background: none;
+      border: none;
+      font-family: var(--mono);
+      font-size: 11px;
+      letter-spacing: 0.3px;
+      color: var(--bg);
+      text-decoration: underline;
+      text-underline-offset: 2px;
+      cursor: pointer;
+      pointer-events: auto;
+      transition: opacity 0.12s;
+    }
+
+    .toast-btn:hover {
+      opacity: 0.7;
+    }
+
     /* modal */
     .overlay {
       position: fixed;
@@ -1049,6 +1106,28 @@
       color: var(--muted);
       margin-bottom: 20px;
       line-height: 1.7;
+    }
+
+    .modal-input {
+      width: 100%;
+      border: 1px solid var(--faint);
+      border-radius: var(--r);
+      background: transparent;
+      padding: 8px 10px;
+      margin-bottom: 20px;
+      font-family: var(--mono);
+      font-size: 12px;
+      color: var(--fg);
+      outline: none;
+      transition: border-color 0.12s;
+    }
+
+    .modal-input::placeholder {
+      color: var(--subtle);
+    }
+
+    .modal-input:focus {
+      border-color: var(--muted);
     }
 
     .modal-btns {
@@ -1096,7 +1175,7 @@
       font-size: 9px;
       padding: 1px 5px;
       border-radius: 9px;
-      background: #f0f0f0;
+      background: var(--chip);
       color: var(--muted);
       letter-spacing: 0.2px;
       cursor: pointer;
@@ -1120,7 +1199,7 @@
     }
 
     .tag-item:hover {
-      background: #f8f8f8;
+      background: var(--surface-hover);
     }
 
     .tag-item-name {
@@ -1144,7 +1223,7 @@
     }
 
     .tag-item-active {
-      background: #f4f4f4;
+      background: var(--surface-active);
       position: relative;
     }
 
@@ -1157,6 +1236,63 @@
       width: 2px;
       background: var(--fg);
       border-radius: 2px;
+    }
+
+    /* ── FOCUS ── keyboard focus ring (placed last so it overrides the
+       per-element `outline: none` resets on inputs and the editor) */
+    *:focus-visible {
+      outline: 2px solid var(--fg);
+      outline-offset: 1px;
+      border-radius: var(--r);
+    }
+
+    .notes-editable:focus-visible {
+      outline-offset: 4px;
+    }
+
+    /* ── RESPONSIVE ──
+       Wide layout is the two-pane default. Below 900px the generous 44px
+       gutters tighten; below 640px the rail stacks above the editor as a
+       capped, scrollable region so both panes fit a phone. */
+    @media (max-width: 900px) {
+      .rail { width: 180px; min-width: 180px; }
+      .meta-bar { padding: 0 20px; }
+      .title-wrap { padding: 22px 20px 0; }
+      .scroller { padding: 16px 20px 40px; }
+      .statusbar { padding: 5px 20px; }
+      .actions-table-container { padding: 24px 20px; }
+    }
+
+    @media (max-width: 640px) {
+      .shell { flex-direction: column; }
+      .rail {
+        width: 100%;
+        min-width: 0;
+        max-height: 42vh;
+        border-right: none;
+        border-bottom: 1px solid var(--faint);
+      }
+      .main { min-height: 0; }
+      /* Reveal hover-only row controls on touch (no :hover to trigger them) */
+      .inf-close-btn,
+      .con-close-btn { opacity: 1; }
+      .title-inp { font-size: 22px; }
+    }
+
+    @media (hover: none) {
+      .inf-close-btn,
+      .con-close-btn { opacity: 1; }
+    }
+
+    /* ── REDUCED MOTION ── */
+    @media (prefers-reduced-motion: reduce) {
+      *,
+      *::before,
+      *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+      }
     }
   </style>
 </head>
@@ -1174,10 +1310,10 @@
       <div class="search-box">
         <input type="text" id="search" placeholder="search…">
       </div>
-      <div class="rail-tabs">
-        <button class="rail-tab active" data-tab="notes">Notes</button>
-        <button class="rail-tab" data-tab="actions">Actions</button>
-        <button class="rail-tab" data-tab="tags">Tags</button>
+      <div class="rail-tabs" role="tablist" aria-label="Views">
+        <button class="rail-tab active" data-tab="notes" role="tab" aria-selected="true">Notes</button>
+        <button class="rail-tab" data-tab="actions" role="tab" aria-selected="false">Actions</button>
+        <button class="rail-tab" data-tab="tags" role="tab" aria-selected="false">Tags</button>
       </div>
 
       <div class="note-list visible" id="note-list"></div>
@@ -1264,6 +1400,18 @@
       <div class="modal-btns">
         <button class="mb" onclick="app.closeModal()">cancel</button>
         <button class="mb p" onclick="app.doDelete()">delete</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- generic input modal (closure notes / reschedule) -->
+  <div class="overlay" id="input-modal">
+    <div class="modal">
+      <h3 id="im-title">—</h3>
+      <input class="modal-input" id="im-input" autocomplete="off">
+      <div class="modal-btns">
+        <button class="mb" id="im-cancel">cancel</button>
+        <button class="mb p" id="im-ok">ok</button>
       </div>
     </div>
   </div>
@@ -1379,6 +1527,7 @@
       const elDelModal = document.getElementById('del-modal');
       const elToast = document.getElementById('toast');
       const elSearch = document.getElementById('search');
+      const elSearchBox = document.querySelector('.search-box');
       const elTitle = document.getElementById('f-title');
       const elDate = document.getElementById('f-date');
       const elTime = document.getElementById('f-time');
@@ -1401,12 +1550,18 @@
 
       function switchTab(tab) {
         activeTab = tab;
-        document.querySelectorAll('.rail-tab').forEach(b =>
-          b.classList.toggle('active', b.dataset.tab === tab)
-        );
+        document.querySelectorAll('.rail-tab').forEach(b => {
+          const on = b.dataset.tab === tab;
+          b.classList.toggle('active', on);
+          b.setAttribute('aria-selected', on ? 'true' : 'false');
+        });
         elList.classList.toggle('visible', tab === 'notes');
         elConActions.classList.toggle('visible', tab === 'actions');
         elConTags.classList.toggle('visible', tab === 'tags');
+
+        // The rail search only filters the notes list; hide it on other tabs
+        // (each consolidated panel has its own filter input).
+        elSearchBox.style.display = (tab === 'notes') ? '' : 'none';
 
         // Hide table container when switching away from actions
         const tableContainer = document.getElementById('actions-table-container');
@@ -2072,6 +2227,47 @@
       function confirmDelete() { elDelModal.classList.add('open'); }
       function closeModal() { elDelModal.classList.remove('open'); }
 
+      // ── INPUT MODAL ──
+      // Styled replacement for window.prompt(). Resolves to the entered
+      // string, or null if cancelled (Escape / cancel / backdrop click).
+      const elInputModal = document.getElementById('input-modal');
+      const elImTitle = document.getElementById('im-title');
+      const elImInput = document.getElementById('im-input');
+      const elImOk = document.getElementById('im-ok');
+      const elImCancel = document.getElementById('im-cancel');
+      let _imResolve = null;
+
+      function inputModal({ title, type = 'text', initial = '', placeholder = '', confirmText = 'ok' }) {
+        return new Promise(resolve => {
+          _imResolve = resolve;
+          elImTitle.textContent = title;
+          elImInput.type = type;
+          elImInput.value = initial;
+          elImInput.placeholder = placeholder;
+          elImOk.textContent = confirmText;
+          elInputModal.classList.add('open');
+          requestAnimationFrame(() => {
+            elImInput.focus();
+            if (type === 'text') elImInput.select();
+          });
+        });
+      }
+
+      function resolveInputModal(val) {
+        if (!_imResolve) return;
+        elInputModal.classList.remove('open');
+        const done = _imResolve; _imResolve = null;
+        done(val);
+      }
+
+      elImOk.addEventListener('click', () => resolveInputModal(elImInput.value));
+      elImCancel.addEventListener('click', () => resolveInputModal(null));
+      elInputModal.addEventListener('click', e => { if (e.target === elInputModal) resolveInputModal(null); });
+      elImInput.addEventListener('keydown', e => {
+        if (e.key === 'Enter') { e.preventDefault(); resolveInputModal(elImInput.value); }
+        else if (e.key === 'Escape') { e.preventDefault(); resolveInputModal(null); }
+      });
+
       function doDelete() {
         if (!currentId) return;
         clearTimeout(noteTimer.t); clearTimeout(metaTimer.t);
@@ -2208,24 +2404,67 @@
           .replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
       }
 
-      function showToast(msg) {
+      function showToast(msg, action) {
+        // action (optional): { label, fn } renders an inline button and keeps
+        // the toast up longer so it's clickable. Setting textContent first
+        // also clears any button left over from a previous toast.
         elToast.textContent = msg;
+        if (action) {
+          const btn = document.createElement('button');
+          btn.className = 'toast-btn';
+          btn.textContent = action.label;
+          btn.onclick = () => {
+            clearTimeout(toastTmr);
+            elToast.classList.remove('on');
+            action.fn();
+          };
+          elToast.appendChild(btn);
+        }
         elToast.classList.add('on');
         clearTimeout(toastTmr);
-        toastTmr = setTimeout(() => elToast.classList.remove('on'), 2000);
+        toastTmr = setTimeout(() => elToast.classList.remove('on'), action ? 6000 : 2000);
+      }
+
+      // Offer a one-tap undo for an action that rewrote a meeting's notes.
+      // Snapshot the prior notes/updatedAt before the mutation and pass them in.
+      function showUndo(msg, meetingId, prevNotes, prevUpdatedAt) {
+        if (prevNotes == null) { showToast(msg); return; }
+        showToast(msg, {
+          label: 'Undo',
+          fn: () => {
+            const m = data.meetings[meetingId];
+            if (!m) return;
+            m.notes = prevNotes;
+            if (prevUpdatedAt) m.updatedAt = prevUpdatedAt;
+            indexMeeting(m);
+            saveData();
+            if (currentId === meetingId) {
+              elNotes.innerHTML = textToHTML(m.notes) || '<ol><li><br></li></ol>';
+              const acts = parseActions(m.notes), decs = parseDecisions(m.notes);
+              updateInferred(acts, decs);
+              updateStatusBar(m.date, acts, decs);
+            }
+            renderList();
+            updateReviewBadge();
+            if (activeTab === 'actions') renderConsolidated('actions');
+            showToast('undone');
+          },
+        });
       }
 
 
       // ── CLOSE ACTION ──
-      function closeAction(btn) {
+      async function closeAction(btn) {
         const fullText = btn.dataset.fulltext;
         if (!fullText) return;
 
-        const note = prompt('Closure note:', '');
+        const note = await inputModal({ title: 'Mark action done', placeholder: 'Closure note (optional)', confirmText: 'Mark done' });
         if (note === null) return; // cancelled
 
         const meeting = data.meetings[currentId];
         if (!meeting) return;
+
+        const undoId = currentId, prevNotes = meeting.notes, prevUpd = meeting.updatedAt;
 
         // Find and update the line in the notes
         const lines = meeting.notes.split('\n');
@@ -2255,16 +2494,19 @@
 
           // Refresh consolidated if visible
           if (activeTab === 'actions') renderConsolidated('actions');
+          showUndo('marked done', undoId, prevNotes, prevUpd);
         }
       }
 
-      function closeActionFromTable(btn, meetingId) {
-        const note = prompt('Closure note:', '');
+      async function closeActionFromTable(btn, meetingId) {
+        const note = await inputModal({ title: 'Mark action done', placeholder: 'Closure note (optional)', confirmText: 'Mark done' });
         if (note === null) return;
 
         const actionData = JSON.parse(btn.dataset.action);
         const meeting = data.meetings[meetingId];
         if (!meeting) return;
+
+        const prevNotes = meeting.notes, prevUpd = meeting.updatedAt;
 
         const lines = meeting.notes.split('\n');
         const targetIdx = lines.findIndex(line => {
@@ -2288,10 +2530,9 @@
           indexMeeting(meeting);
           saveData();
 
-          // Refresh the table view
-          if (actionsView.mode === 'detail') {
-            renderActionsForPerson(actionsView.selectedPerson);
-          }
+          // Refresh the table view (handles detail + all-actions modes)
+          if (activeTab === 'actions') renderConsolidated('actions');
+          showUndo('marked done', meetingId, prevNotes, prevUpd);
         }
       }
 
@@ -2448,6 +2689,7 @@
           tab.appendChild(badge);
         }
         badge.textContent = n;
+        badge.setAttribute('aria-label', `${n} action${n === 1 ? '' : 's'} need attention`);
         badge.classList.toggle('tab-badge-overdue', overdue.length > 0);
       }
 
@@ -2544,21 +2786,25 @@
         updateReviewBadge();
       }
 
-      function reviewDone(btn) {
+      async function reviewDone(btn) {
         // Match the existing Mark-done buttons: capture a closure note and
         // store it inline as the action's [done: …] marker.
-        const note = prompt('Closure note:', '');
+        const note = await inputModal({ title: 'Mark action done', placeholder: 'Closure note (optional)', confirmText: 'Mark done' });
         if (note === null) return;
-        if (rewriteActionLine(btn.dataset.mid, btn.dataset.full, l => `${l} [done: ${note}]`)) {
+        const mid = btn.dataset.mid, m = data.meetings[mid];
+        const prevNotes = m ? m.notes : null, prevUpd = m ? m.updatedAt : null;
+        if (rewriteActionLine(mid, btn.dataset.full, l => `${l} [done: ${note}]`)) {
           refreshReview();
-          showToast('marked done');
+          showUndo('marked done', mid, prevNotes, prevUpd);
         }
       }
 
       function setReviewDeadline(mid, full, date, toast) {
+        const m = data.meetings[mid];
+        const prevNotes = m ? m.notes : null, prevUpd = m ? m.updatedAt : null;
         const ok = rewriteActionLine(mid, full, l =>
           /!\d{4}-\d{2}-\d{2}/.test(l) ? l.replace(/!\d{4}-\d{2}-\d{2}/, '!' + date) : `${l} !${date}`);
-        if (ok) { refreshReview(); showToast(toast); }
+        if (ok) { refreshReview(); showUndo(toast, mid, prevNotes, prevUpd); }
       }
 
       function reviewSnooze(btn) {
@@ -2566,11 +2812,14 @@
         setReviewDeadline(btn.dataset.mid, btn.dataset.full, d.toISOString().slice(0, 10), 'snoozed 1 week');
       }
 
-      function reviewReschedule(btn) {
-        const input = prompt('New deadline (YYYY-MM-DD):', new Date().toISOString().slice(0, 10));
+      async function reviewReschedule(btn) {
+        const input = await inputModal({
+          title: 'Reschedule deadline', type: 'date',
+          initial: new Date().toISOString().slice(0, 10), confirmText: 'Set deadline',
+        });
         if (input === null) return;
-        const v = input.trim();
-        if (!/^\d{4}-\d{2}-\d{2}$/.test(v)) { showToast('use YYYY-MM-DD'); return; }
+        const v = (input || '').trim();
+        if (!/^\d{4}-\d{2}-\d{2}$/.test(v)) { showToast('pick a valid date'); return; }
         setReviewDeadline(btn.dataset.mid, btn.dataset.full, v, 'rescheduled');
       }
 

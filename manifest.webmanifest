@@ -1,0 +1,18 @@
+{
+  "name": "Minutes",
+  "short_name": "Minutes",
+  "description": "An offline-first meeting notes app.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#fefefe",
+  "theme_color": "#fefefe",
+  "icons": [
+    {
+      "src": "./icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
