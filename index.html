@@ -4,8 +4,9 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-  <meta name="color-scheme" content="light">
-  <meta name="theme-color" content="#fefefe">
+  <meta name="color-scheme" content="light dark">
+  <meta name="theme-color" content="#fefefe" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#1a1a1a" media="(prefers-color-scheme: dark)">
   <meta name="description" content="Minutes — an offline-first meeting notes app.">
   <link rel="manifest" href="./manifest.webmanifest">
   <title>Minutes</title>
@@ -27,10 +28,34 @@
       --muted: #6b6b6b;   /* secondary text — meets 4.5:1 on --bg */
       --subtle: #8a8a8a;  /* placeholders / hints / quiet labels */
       --faint: #dcdcdc;   /* hairline borders only */
+      --surface-hover: var(--surface-hover);
+      --surface-active: var(--surface-active);
+      --chip: var(--chip);
+      --over-bg: var(--over-bg);  /* overdue / alert */
+      --over-fg: var(--over-fg);
+      --soon-bg: var(--soon-bg);  /* due soon / warning */
+      --soon-fg: var(--soon-fg);
       --mono: 'JetBrains Mono', monospace;
       --serif: 'Lora', serif;
       --r: 3px;
       --font-sz: 13px;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #1a1a1a;
+        --fg: #e8e8e8;
+        --muted: #9a9a9a;
+        --subtle: #777;
+        --faint: #333;
+        --surface-hover: #242424;
+        --surface-active: #2c2c2c;
+        --chip: #2a2a2a;
+        --over-bg: #3a2222;
+        --over-fg: #e88;
+        --soon-bg: #3a3320;
+        --soon-fg: #e0b056;
+      }
     }
 
     html,
@@ -157,13 +182,13 @@
       line-height: 15px;
       text-align: center;
       vertical-align: middle;
-      background: #f0f0f0;
+      background: var(--chip);
       color: var(--muted);
     }
 
     .tab-badge-overdue {
-      background: #fde8e8;
-      color: #b33;
+      background: var(--over-bg);
+      color: var(--over-fg);
     }
 
     .note-list {
@@ -193,11 +218,11 @@
     }
 
     .ni:hover {
-      background: #f8f8f8;
+      background: var(--surface-hover);
     }
 
     .ni.active {
-      background: #f4f4f4;
+      background: var(--surface-active);
     }
 
     .ni.active::before {
@@ -287,7 +312,7 @@
     }
 
     .con-item:hover {
-      background: #f8f8f8;
+      background: var(--surface-hover);
     }
 
     .con-item-text {
@@ -426,7 +451,7 @@
     }
 
     .del-btn:hover {
-      color: #b33;
+      color: var(--over-fg);
     }
 
     /* title */
@@ -621,17 +646,17 @@
     }
 
     .dl-overdue {
-      background: #fde8e8;
-      color: #b33;
+      background: var(--over-bg);
+      color: var(--over-fg);
     }
 
     .dl-today {
-      background: #fff3cd;
-      color: #c47a00;
+      background: var(--soon-bg);
+      color: var(--soon-fg);
     }
 
     .dl-upcoming {
-      background: #f0f0f0;
+      background: var(--chip);
       color: var(--muted);
     }
 
@@ -653,15 +678,15 @@
       cursor: default;
     }
 
-    .review-overdue { color: #b33; }
-    .review-soon { color: #c47a00; }
+    .review-overdue { color: var(--over-fg); }
+    .review-soon { color: var(--soon-fg); }
     .review-muted { color: var(--muted); cursor: pointer; }
 
     .review-num {
       font-size: 10px;
       font-weight: 400;
       color: var(--muted);
-      background: #f4f4f4;
+      background: var(--surface-active);
       border-radius: 8px;
       padding: 0 7px;
     }
@@ -687,14 +712,14 @@
       margin-left: 4px;
       border: 1px solid var(--faint);
       border-radius: 3px;
-      background: #fff;
+      background: var(--bg);
       color: var(--muted);
       cursor: pointer;
       transition: background 0.1s, color 0.1s, border-color 0.1s;
     }
 
     .rev-btn:hover {
-      background: #f4f4f4;
+      background: var(--surface-active);
       color: var(--fg);
     }
 
@@ -702,6 +727,14 @@
       background: #eaf6ea;
       color: #2e7d32;
       border-color: #cfe6cf;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      .rev-done:hover {
+        background: #1f3322;
+        color: #7ec98a;
+        border-color: #2f5236;
+      }
     }
 
     .review-empty {
@@ -719,11 +752,11 @@
     }
 
     .person-item:hover {
-      background: #f8f8f8;
+      background: var(--surface-hover);
     }
 
     .person-item-active {
-      background: #f4f4f4;
+      background: var(--surface-active);
       position: relative;
     }
 
@@ -767,7 +800,7 @@
       border-bottom: 1px solid var(--faint);
       font-size: 12px;
       font-weight: 500;
-      background: #f8f8f8;
+      background: var(--surface-hover);
     }
 
 
@@ -838,7 +871,7 @@
     }
 
     .actions-table tbody tr:hover {
-      background: #f8f8f8;
+      background: var(--surface-hover);
     }
 
     .actions-table tbody tr.row-done {
@@ -1122,7 +1155,7 @@
       font-size: 9px;
       padding: 1px 5px;
       border-radius: 9px;
-      background: #f0f0f0;
+      background: var(--chip);
       color: var(--muted);
       letter-spacing: 0.2px;
       cursor: pointer;
@@ -1146,7 +1179,7 @@
     }
 
     .tag-item:hover {
-      background: #f8f8f8;
+      background: var(--surface-hover);
     }
 
     .tag-item-name {
@@ -1170,7 +1203,7 @@
     }
 
     .tag-item-active {
-      background: #f4f4f4;
+      background: var(--surface-active);
       position: relative;
     }
 
@@ -1474,6 +1507,7 @@
       const elDelModal = document.getElementById('del-modal');
       const elToast = document.getElementById('toast');
       const elSearch = document.getElementById('search');
+      const elSearchBox = document.querySelector('.search-box');
       const elTitle = document.getElementById('f-title');
       const elDate = document.getElementById('f-date');
       const elTime = document.getElementById('f-time');
@@ -1504,6 +1538,10 @@
         elList.classList.toggle('visible', tab === 'notes');
         elConActions.classList.toggle('visible', tab === 'actions');
         elConTags.classList.toggle('visible', tab === 'tags');
+
+        // The rail search only filters the notes list; hide it on other tabs
+        // (each consolidated panel has its own filter input).
+        elSearchBox.style.display = (tab === 'notes') ? '' : 'none';
 
         // Hide table container when switching away from actions
         const tableContainer = document.getElementById('actions-table-container');
