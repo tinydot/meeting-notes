@@ -43,7 +43,7 @@ Plain-text conventions in the notes editor that the parsers in `parseActions`, `
 - `!YYYY-MM-DD`, `!today`, `!tomorrow`, `!nextweek` → deadline on an action (expanded by `expandDeadlineShortcuts`)
 - `#tag` → tag
 
-The contenteditable layer round-trips through `textToHTML` / `htmlToText`: notes are a flat numbered list, one line per `<li>`, preserved as plain text on disk.
+The contenteditable layer round-trips through `textToHTML` / `htmlToText`: notes are a flat numbered list, one line per `<li>`, preserved as plain text on disk. `textToHTML` runs each line through `renderNoteLine`, which escapes it and wraps `#tag` tokens in `<span class="tag-link" data-tag="…">`; `htmlToText` reads each span's `textContent`, so the round-trip stays lossless. Clicking a `.tag-link` in the editor opens the tag cross-reference modal (see Tags below).
 
 ### UI structure
 
@@ -51,7 +51,7 @@ Three tabs in the left rail driven by `switchTab(tab)`:
 
 - **Notes** — note list + editor in `<main>`.
 - **Actions** — `actionsView.mode` selects the `<main>` view (all injected into `#actions-table-container`): `review` (default) → `renderReview`, `all` → `renderAllActions`, `detail` → `renderActionsForPerson`. `renderActionsByPerson` draws the sidebar, which always leads with a **Review** inbox + **All actions** nav. The Review inbox (`reviewItems` buckets open actions into Overdue / Due this week / No deadline) offers one-tap Done / Snooze 1w / Reschedule (`reviewDone` / `reviewSnooze` / `reviewReschedule`), each a line rewrite via `rewriteActionLine`. `updateReviewBadge` keeps the count pill on the Actions rail-tab in sync.
-- **Tags** — `renderTagsPanel` + `showTagNotes` (table injected via `#tags-table-container`).
+- **Tags** — `renderTagsPanel` + `showTagNotes` (table injected via `#tags-table-container`). Separately, the `#tag-modal` overlay is a cross-reference popup reachable from anywhere a tag link is clicked (editor): `openTagModal(tag)` collects every note line carrying that tag via `tagEntries(tag)` and renders two groups — open items with a deadline (soonest first), then everything else / completed (newest meeting first). Rows call `openTagNote(id)` to jump to the source note.
 
 `switchTab` is responsible for showing/hiding the editor, empty state, and the dynamically inserted table containers — when adding a new tab or main-area view, mirror that show/hide bookkeeping or stale panels will leak across tabs.
 
