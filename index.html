@@ -1394,8 +1394,11 @@
       border-radius: var(--r);
     }
 
+    /* The notes editor is the primary writing surface — the caret already
+       signals focus, so suppress its focus ring (other controls keep theirs). */
     .notes-editable:focus-visible {
-      outline-offset: 4px;
+      outline: none;
+      border-radius: 0;
     }
 
     /* ── RESPONSIVE ──
