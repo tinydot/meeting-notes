@@ -2856,6 +2856,7 @@
       const elTagModal = document.getElementById('tag-modal');
       const elTagmTitle = document.getElementById('tagm-title');
       const elTagmBody = document.getElementById('tagm-body');
+      const elTagmClose = document.getElementById('tagm-close');
 
       function reEscape(s) { return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); }
 
@@ -2948,6 +2949,11 @@
         elTagmBody.innerHTML = body;
         elTagmBody.scrollTop = 0;
         elTagModal.classList.add('open');
+        // Move focus into the modal. Besides being the correct a11y behavior
+        // (Esc/keyboard land here), this pulls focus off the contenteditable
+        // editor — otherwise its :focus-visible outline paints a box around the
+        // whole note that lingers behind the dimmed backdrop.
+        elTagmClose.focus();
       }
 
       function openTagModal(tag) {
@@ -2977,7 +2983,7 @@
         openNote(id, activeTab !== 'notes');
       }
 
-      document.getElementById('tagm-close').addEventListener('click', closeTagModal);
+      elTagmClose.addEventListener('click', closeTagModal);
       elTagModal.addEventListener('click', e => { if (e.target === elTagModal) closeTagModal(); });
       document.addEventListener('keydown', e => {
         if (e.key === 'Escape' && elTagModal.classList.contains('open')) closeTagModal();
