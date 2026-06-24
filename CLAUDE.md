@@ -43,7 +43,7 @@ Plain-text conventions in the notes editor that the parsers in `parseActions`, `
 - `!YYYY-MM-DD`, `!today`, `!tomorrow`, `!nextweek` → deadline on an action (expanded by `expandDeadlineShortcuts`)
 - `#tag` → tag
 
-The contenteditable layer round-trips through `textToHTML` / `htmlToText`: notes are a flat numbered list, one line per `<li>`, preserved as plain text on disk.
+The contenteditable layer round-trips through `textToHTML` / `htmlToText`: notes are a flat numbered list, one line per `<li>`, preserved as plain text on disk. `textToHTML` runs each line through `renderNoteLine`, which escapes it and wraps `#tag` tokens in `<span class="tag-link">` and `@mention` tokens in `<span class="person-link">`; `htmlToText` reads each span's `textContent`, so the round-trip stays lossless. A single document-level click handler opens the cross-reference modal for whichever link was clicked — `.tag-link` → `openTagModal`, `.person-link` → `openPersonModal` — wherever those links appear (editor, inferred panel, backlinks).
 
 ### UI structure
 
@@ -52,6 +52,10 @@ Three tabs in the left rail driven by `switchTab(tab)`:
 - **Notes** — note list + editor in `<main>`.
 - **Actions** — `actionsView.mode` selects the `<main>` view (all injected into `#actions-table-container`): `review` (default) → `renderReview`, `all` → `renderAllActions`, `detail` → `renderActionsForPerson`. `renderActionsByPerson` draws the sidebar, which always leads with a **Review** inbox + **All actions** nav. The Review inbox (`reviewItems` buckets open actions into Overdue / Due this week / No deadline) offers one-tap Done / Snooze 1w / Reschedule (`reviewDone` / `reviewSnooze` / `reviewReschedule`), each a line rewrite via `rewriteActionLine`. `updateReviewBadge` keeps the count pill on the Actions rail-tab in sync.
 - **Tags** — `renderTagsPanel` + `showTagNotes` (table injected via `#tags-table-container`).
+
+**Cross-reference modal (`#tag-modal`).** A shared popup that traces a thread without leaving the editor. `openRefModal({title, entries, highlightRe, empty, unit})` splits entries into two ordered groups — open items with a deadline (soonest first), then everything without a deadline or already completed (newest meeting first) — and paints them via `refItemHTML`; rows call `openRefNote(id)` to jump to the source note. Two collectors feed it: `tagEntries(tag)` (every note line carrying a `#tag`) backs `openTagModal`, and `personEntries(person)` (the denormalized `data.actions` index, filtered by owner) backs `openPersonModal`.
+
+**Backlinks ("Related threads").** `renderBacklinks` adds a third section to the inferred panel under the editor: for each tag on the current note (read live from the editor), it lists other meetings sharing that tag. `updateInferred` calls it and folds its return into the panel's show/hide condition. Tag chips there reuse `.tag-link` (so they open the modal); meeting names call `openNote(id, true)`.
 
 `switchTab` is responsible for showing/hiding the editor, empty state, and the dynamically inserted table containers — when adding a new tab or main-area view, mirror that show/hide bookkeeping or stale panels will leak across tabs.
 

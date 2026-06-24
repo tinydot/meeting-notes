@@ -35,6 +35,7 @@
       --over-fg: var(--over-fg);
       --soon-bg: var(--soon-bg);  /* due soon / warning */
       --soon-fg: var(--soon-fg);
+      --link: #3a6ea5;    /* tag links / cross-references */
       --mono: 'JetBrains Mono', monospace;
       --serif: 'Lora', serif;
       --r: 3px;
@@ -55,6 +56,7 @@
         --over-fg: #e88;
         --soon-bg: #3a3320;
         --soon-fg: #e0b056;
+        --link: #6fa3d6;
       }
     }
 
@@ -1163,6 +1165,152 @@
       opacity: 0.75;
     }
 
+    /* ── TAG MODAL (cross-reference popup) ── */
+    /* Inline clickable #tag / @mention inside the editor + read-only views */
+    .tag-link,
+    .person-link {
+      color: var(--link);
+      cursor: pointer;
+      border-radius: 2px;
+      transition: background 0.1s;
+    }
+
+    .tag-link:hover,
+    .person-link:hover {
+      text-decoration: underline;
+      background: var(--chip);
+    }
+
+    /* Backlinks ("Related threads") rows in the inferred panel */
+    .backlink-row {
+      font-size: 12px;
+    }
+
+    .backlink-meetings {
+      color: var(--muted);
+    }
+
+    .backlink-mtg {
+      cursor: pointer;
+    }
+
+    .backlink-mtg:hover {
+      color: var(--fg);
+      text-decoration: underline;
+    }
+
+    .backlink-meetings .sep {
+      color: var(--subtle);
+      margin: 0 5px;
+    }
+
+    .modal-wide {
+      width: 560px;
+      max-width: 92vw;
+      max-height: 76vh;
+      display: flex;
+      flex-direction: column;
+      padding: 22px 0 0;
+    }
+
+    .tagm-head {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 0 26px 14px;
+      border-bottom: 1px solid var(--faint);
+    }
+
+    .tagm-head h3 {
+      font-family: var(--serif);
+      font-size: 18px;
+      font-weight: 500;
+    }
+
+    .tagm-sub {
+      font-size: 10px;
+      color: var(--muted);
+      margin-left: 8px;
+    }
+
+    .tagm-close {
+      border: none;
+      background: transparent;
+      color: var(--muted);
+      cursor: pointer;
+      font-size: 14px;
+      line-height: 1;
+      padding: 2px 4px;
+    }
+
+    .tagm-close:hover {
+      color: var(--fg);
+    }
+
+    .tagm-body {
+      overflow-y: auto;
+      padding: 6px 0 14px;
+    }
+
+    .tagm-group-lbl {
+      font-size: 9px;
+      letter-spacing: 0.6px;
+      text-transform: uppercase;
+      color: var(--subtle);
+      padding: 12px 26px 6px;
+    }
+
+    .tagm-item {
+      padding: 9px 26px;
+      cursor: pointer;
+      border-left: 2px solid transparent;
+      transition: background 0.1s, border-color 0.1s;
+    }
+
+    .tagm-item:hover {
+      background: var(--surface-hover);
+      border-left-color: var(--link);
+    }
+
+    .tagm-item-text {
+      font-size: 12px;
+      line-height: 1.55;
+      color: var(--fg);
+    }
+
+    .tagm-item.done .tagm-item-text {
+      color: var(--muted);
+      text-decoration: line-through;
+      text-decoration-color: var(--subtle);
+    }
+
+    .tagm-item-text mark {
+      background: transparent;
+      color: var(--link);
+      font-weight: 500;
+    }
+
+    .tagm-item-meta {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      margin-top: 4px;
+      font-size: 10px;
+      color: var(--muted);
+    }
+
+    .tagm-item-meta .sep {
+      color: var(--subtle);
+    }
+
+    .tagm-empty {
+      padding: 26px;
+      text-align: center;
+      font-size: 11px;
+      color: var(--muted);
+    }
+
     /* ── TAGS ── */
     .ni-tags {
       display: flex;
@@ -1381,6 +1529,10 @@
               <div class="inf-lbl">Decisions</div>
               <div id="dec-list"></div>
             </div>
+            <div class="inf-sec" id="link-sec" style="display:none">
+              <div class="inf-lbl">Related threads</div>
+              <div id="link-list"></div>
+            </div>
           </div>
         </div>
 
@@ -1413,6 +1565,17 @@
         <button class="mb" id="im-cancel">cancel</button>
         <button class="mb p" id="im-ok">ok</button>
       </div>
+    </div>
+  </div>
+
+  <!-- tag cross-reference modal -->
+  <div class="overlay" id="tag-modal">
+    <div class="modal modal-wide">
+      <div class="tagm-head">
+        <h3 id="tagm-title">#tag<span class="tagm-sub" id="tagm-sub"></span></h3>
+        <button class="tagm-close" id="tagm-close" aria-label="close">✕</button>
+      </div>
+      <div class="tagm-body" id="tagm-body"></div>
     </div>
   </div>
 
@@ -1536,6 +1699,8 @@
       const elDecSec = document.getElementById('dec-sec');
       const elActList = document.getElementById('act-list');
       const elDecList = document.getElementById('dec-list');
+      const elLinkSec = document.getElementById('link-sec');
+      const elLinkList = document.getElementById('link-list');
       const elConActions = document.getElementById('con-actions');
       const elListActions = document.getElementById('list-actions');
       const elFilterActions = document.getElementById('filter-actions');
@@ -1873,7 +2038,21 @@
 
         if (!items.length) return '';
 
-        return '<ol>' + items.map(c => `<li>${esc(c)}</li>`).join('') + '</ol>';
+        return '<ol>' + items.map(c => `<li>${renderNoteLine(c)}</li>`).join('') + '</ol>';
+      }
+
+      // Escape a note line and wrap #tags and @mentions as clickable
+      // cross-reference links. The regexes run on the *escaped* string; tag /
+      // name chars and the '#' '@' sigils are untouched by esc(), so matching
+      // stays accurate and we never split a numeric entity like &#39; (the digit
+      // after '#' fails the [a-z] start). Round-trips cleanly: htmlToText reads
+      // each span's textContent ("#tag" / "@name").
+      function renderNoteLine(line) {
+        return esc(line)
+          .replace(/#([a-zA-Z][a-zA-Z0-9_-]*)/g,
+            (_m, tag) => `<span class="tag-link" data-tag="${tag.toLowerCase()}">#${tag}</span>`)
+          .replace(/@([a-zA-Z0-9_.+-]+)/g,
+            (_m, name) => `<span class="person-link" data-person="${name.toLowerCase()}">@${name}</span>`);
       }
 
       // Convert HTML list structure back to plain text. One line per <li>;
@@ -1980,6 +2159,18 @@
       });
 
       elNotes.addEventListener('input', () => onNotesChange(htmlToText(elNotes.innerHTML)));
+
+      // Delegated, document-wide: clicking any rendered #tag or @mention link —
+      // in the editor, the inferred panel, or the backlinks list — opens its
+      // cross-reference modal. In the editor the caret still lands where clicked,
+      // so the note stays editable; close the modal (Esc / ✕) to keep typing.
+      // Freshly typed tokens become links after the note re-renders on reopen.
+      document.addEventListener('click', e => {
+        const tag = e.target.closest('.tag-link');
+        if (tag) { openTagModal(tag.dataset.tag); return; }
+        const person = e.target.closest('.person-link');
+        if (person) { openPersonModal(person.dataset.person); return; }
+      });
 
       // ── DEADLINE SHORTCUTS ──
       function expandDeadlineShortcuts(text) {
@@ -2088,7 +2279,33 @@
           elDecSec.style.display = 'none';
         }
 
-        elInferred.style.display = (actions.length || decisions.length) ? '' : 'none';
+        const hasLinks = renderBacklinks();
+        elInferred.style.display = (actions.length || decisions.length || hasLinks) ? '' : 'none';
+      }
+
+      // Backlinks: for each tag on the current note, surface other meetings that
+      // share it, so cross-references are visible without leaving the editor.
+      // Tags are read live from the editor so they stay fresh while typing.
+      // Returns true when any related thread was rendered.
+      function renderBacklinks() {
+        const tags = currentId ? parseTags(htmlToText(elNotes.innerHTML)) : [];
+        const rows = [];
+        for (const tag of tags) {
+          const others = Object.values(data.meetings)
+            .filter(m => m.id !== currentId && (m.tags || []).includes(tag))
+            .sort((a, b) => (b.date || '').localeCompare(a.date || ''));
+          if (others.length) rows.push({ tag, others });
+        }
+        if (!rows.length) { elLinkSec.style.display = 'none'; elLinkList.innerHTML = ''; return false; }
+        elLinkList.innerHTML = rows.map(r => `
+      <div class="inf-row backlink-row">
+        <span class="tag-link" data-tag="${esc(r.tag)}">#${esc(r.tag)}</span>
+        <span class="backlink-meetings">${r.others
+          .map(m => `<span class="backlink-mtg" onclick="app.openNote('${m.id}', true)">${esc(m.title || 'Untitled')}</span>`)
+          .join('<span class="sep">·</span>')}</span>
+      </div>`).join('');
+        elLinkSec.style.display = '';
+        return true;
       }
 
       // ── SIDEBAR NOTE LIST ──
@@ -2631,10 +2848,146 @@
         showTagNotes(tag);
       }
 
+      // ── CROSS-REFERENCE MODAL (tags & people) ──
+      // Quick popup tracing every past note line tied to a given #tag or
+      // @person, so nothing discussed under that thread gets missed. Ordering:
+      //   1. Open items with a deadline → soonest deadline first (overdue up top)
+      //   2. Everything else (no deadline OR completed) → newest meeting first
+      const elTagModal = document.getElementById('tag-modal');
+      const elTagmTitle = document.getElementById('tagm-title');
+      const elTagmBody = document.getElementById('tagm-body');
+
+      function reEscape(s) { return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); }
+
+      // Collect every note line carrying a #tag, as ref-modal entries.
+      function tagEntries(tag) {
+        // Lookahead (not \b) so #api does not match the longer tag #api-v2.
+        const re = new RegExp('#' + reEscape(tag) + '(?![a-zA-Z0-9_-])', 'i');
+        const entries = [];
+        for (const m of Object.values(data.meetings)) {
+          if (!(m.tags || []).includes(tag)) continue;
+          const lines = (m.notes || '').split('\n')
+            .map(l => l.replace(/^\t+/, '').trim())
+            .filter(l => re.test(l));
+          for (const raw of lines) {
+            const line = expandDeadlineShortcuts(raw);
+            const dlMatch = line.match(/!(\d{4}-\d{2}-\d{2})/);
+            const doneMatch = line.match(/\[(done|closed):\s*(.+?)\]\s*$/i);
+            const text = line
+              .replace(/^[→>*\-\d.]+\s*/, '')
+              .replace(/\[(done|closed):.+?\]\s*$/i, '')
+              .replace(/!\d{4}-\d{2}-\d{2}/g, '')
+              .replace(/\s+/g, ' ').trim();
+            if (!text) continue;
+            entries.push({
+              meetingId: m.id,
+              title: m.title || 'Untitled',
+              meetingDate: m.date || '',
+              text,
+              deadline: dlMatch ? dlMatch[1] : null,
+              isDone: !!doneMatch,
+            });
+          }
+        }
+        return entries;
+      }
+
+      // Collect every action assigned to a @person, from the denormalized index.
+      function personEntries(person) {
+        return data.actions
+          .filter(a => a.owners.includes(person))
+          .map(a => ({
+            meetingId: a.meetingId,
+            title: a.meetingTitle || 'Untitled',
+            meetingDate: a.meetingDate || '',
+            text: a.text,
+            deadline: a.deadline,
+            isDone: a.isDone,
+          }));
+      }
+
+      function refItemHTML(e, highlightRe) {
+        let textHTML = esc(e.text);
+        if (highlightRe) textHTML = textHTML.replace(highlightRe, m => `<mark>${m}</mark>`);
+        const meta = [`<span class="tagm-meeting">${esc(e.title)}</span>`];
+        if (e.meetingDate) meta.push(`<span class="sep">·</span><span>${fmtDate(e.meetingDate)}</span>`);
+        if (e.deadline && !e.isDone) meta.push(deadlineBadge(e.deadline));
+        if (e.isDone) meta.push(`<span class="sep">·</span><span>done</span>`);
+        return `
+      <div class="tagm-item${e.isDone ? ' done' : ''}" onclick="app.openRefNote('${e.meetingId}')">
+        <div class="tagm-item-text">${textHTML}</div>
+        <div class="tagm-item-meta">${meta.join(' ')}</div>
+      </div>`;
+      }
+
+      // Shared renderer: split entries into the two ordered groups and paint.
+      function openRefModal({ title, entries, highlightRe, empty, unit }) {
+        const total = entries.length;
+        const scheduled = entries.filter(e => e.deadline && !e.isDone)
+          .sort((a, b) => a.deadline.localeCompare(b.deadline));
+        const rest = entries.filter(e => !e.deadline || e.isDone)
+          .sort((a, b) => (b.meetingDate || '').localeCompare(a.meetingDate || ''));
+
+        elTagmTitle.innerHTML = `${esc(title)}<span class="tagm-sub" id="tagm-sub"></span>`;
+        document.getElementById('tagm-sub').textContent =
+          total ? `${total} ${unit}${total !== 1 ? 's' : ''}` : '';
+
+        let body = '';
+        if (!total) {
+          body = `<div class="tagm-empty">${esc(empty)}</div>`;
+        } else {
+          if (scheduled.length) {
+            body += '<div class="tagm-group-lbl">By deadline</div>';
+            body += scheduled.map(e => refItemHTML(e, highlightRe)).join('');
+          }
+          if (rest.length) {
+            if (scheduled.length) body += '<div class="tagm-group-lbl">By meeting date</div>';
+            body += rest.map(e => refItemHTML(e, highlightRe)).join('');
+          }
+        }
+        elTagmBody.innerHTML = body;
+        elTagmBody.scrollTop = 0;
+        elTagModal.classList.add('open');
+      }
+
+      function openTagModal(tag) {
+        openRefModal({
+          title: `#${tag}`,
+          entries: tagEntries(tag),
+          highlightRe: new RegExp('#' + reEscape(tag) + '(?![a-zA-Z0-9_-])', 'gi'),
+          empty: 'No other notes mention this tag yet.',
+          unit: 'mention',
+        });
+      }
+
+      function openPersonModal(person) {
+        openRefModal({
+          title: `@${person}`,
+          entries: personEntries(person),
+          highlightRe: new RegExp('@' + reEscape(person) + '(?![a-zA-Z0-9_.+-])', 'gi'),
+          empty: 'No actions assigned to this person yet.',
+          unit: 'action',
+        });
+      }
+
+      function closeTagModal() { elTagModal.classList.remove('open'); }
+
+      function openRefNote(id) {
+        closeTagModal();
+        openNote(id, activeTab !== 'notes');
+      }
+
+      document.getElementById('tagm-close').addEventListener('click', closeTagModal);
+      elTagModal.addEventListener('click', e => { if (e.target === elTagModal) closeTagModal(); });
+      document.addEventListener('keydown', e => {
+        if (e.key === 'Escape' && elTagModal.classList.contains('open')) closeTagModal();
+      });
+
       window.app = {
         confirmDelete, closeModal, doDelete, newNote, openNote, exportData, importData,
         closeAction, closeActionFromTable, showPersonActions, showPersonList, filterByTag,
-        showReview, showAllActions, reviewDone, reviewSnooze, reviewReschedule
+        showReview, showAllActions, reviewDone, reviewSnooze, reviewReschedule,
+        openTagModal, openPersonModal, openRefNote, closeTagModal
       };
 
       function showPersonActions(person) {
