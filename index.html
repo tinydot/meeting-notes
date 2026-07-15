@@ -28,13 +28,19 @@
       --muted: #6b6b6b;   /* secondary text — meets 4.5:1 on --bg */
       --subtle: #8a8a8a;  /* placeholders / hints / quiet labels */
       --faint: #dcdcdc;   /* hairline borders only */
-      --surface-hover: var(--surface-hover);
-      --surface-active: var(--surface-active);
-      --chip: var(--chip);
-      --over-bg: var(--over-bg);  /* overdue / alert */
-      --over-fg: var(--over-fg);
-      --soon-bg: var(--soon-bg);  /* due soon / warning */
-      --soon-fg: var(--soon-fg);
+      --surface-hover: #f5f5f5;
+      --surface-active: #ededed;
+      --chip: #eeeeee;
+      --over-bg: #f7e4e4;  /* overdue / alert */
+      --over-fg: #a03434;
+      --soon-bg: #f5eeda;  /* due soon / warning */
+      --soon-fg: #7a5f14;
+      --done-bg: #eaf6ea;  /* completed / success */
+      --done-fg: #2e7d32;
+      --done-border: #cfe6cf;
+      --sdot-idle: #ccc;
+      --sdot-saved: #3a9a5c;
+      --sdot-dirty: #e8a838;
       --link: #3a6ea5;    /* tag links / cross-references */
       --mono: 'JetBrains Mono', monospace;
       --serif: 'Lora', serif;
@@ -56,6 +62,10 @@
         --over-fg: #e88;
         --soon-bg: #3a3320;
         --soon-fg: #e0b056;
+        --done-bg: #1f3322;
+        --done-fg: #7ec98a;
+        --done-border: #2f5236;
+        --sdot-idle: #4a4a4a;
         --link: #6fa3d6;
       }
     }
@@ -306,33 +316,6 @@
       border-color: var(--muted);
     }
 
-    .con-item {
-      padding: 8px 12px;
-      border-bottom: 1px solid var(--faint);
-      cursor: pointer;
-      transition: background 0.1s;
-    }
-
-    .con-item:hover {
-      background: var(--surface-hover);
-    }
-
-    .con-item-text {
-      font-size: 11px;
-      color: var(--fg);
-      line-height: 1.5;
-      margin-bottom: 3px;
-    }
-
-    .con-item-meta {
-      font-size: 10px;
-      color: var(--muted);
-    }
-
-    .con-item-who {
-      font-style: italic;
-    }
-
     .rail-foot {
       padding: 10px 12px;
       border-top: 1px solid var(--faint);
@@ -552,10 +535,6 @@
       text-align: right;
     }
 
-    .inf-row {
-      position: relative;
-    }
-
     .inf-row-done {
       opacity: 0.5;
     }
@@ -592,49 +571,6 @@
       color: var(--muted);
       font-style: italic;
       display: block;
-      margin-top: 2px;
-    }
-
-    .con-item {
-      position: relative;
-    }
-
-    .con-item-done {
-      opacity: 0.6;
-    }
-
-    .con-item-done .con-item-text {
-      text-decoration: line-through;
-    }
-
-    .con-close-btn {
-      position: absolute;
-      right: 8px;
-      top: 8px;
-      background: var(--bg);
-      border: 1px solid var(--faint);
-      border-radius: var(--r);
-      color: var(--muted);
-      font-size: 10px;
-      padding: 3px 8px;
-      cursor: pointer;
-      opacity: 0;
-      transition: opacity 0.15s, border-color 0.15s;
-    }
-
-    .con-item:hover .con-close-btn {
-      opacity: 1;
-    }
-
-    .con-close-btn:hover {
-      border-color: var(--fg);
-      color: var(--fg);
-    }
-
-    .con-item-done-note {
-      font-size: 10px;
-      color: var(--muted);
-      font-style: italic;
       margin-top: 2px;
     }
 
@@ -726,17 +662,9 @@
     }
 
     .rev-done:hover {
-      background: #eaf6ea;
-      color: #2e7d32;
-      border-color: #cfe6cf;
-    }
-
-    @media (prefers-color-scheme: dark) {
-      .rev-done:hover {
-        background: #1f3322;
-        color: #7ec98a;
-        border-color: #2f5236;
-      }
+      background: var(--done-bg);
+      color: var(--done-fg);
+      border-color: var(--done-border);
     }
 
     .review-empty {
@@ -971,6 +899,7 @@
     }
 
     .inf-row {
+      position: relative;
       display: flex;
       align-items: baseline;
       gap: 12px;
@@ -1014,17 +943,17 @@
       width: 5px;
       height: 5px;
       border-radius: 50%;
-      background: #ccc;
+      background: var(--sdot-idle);
       flex-shrink: 0;
       transition: background 0.3s;
     }
 
     .sdot.saved {
-      background: #3a9a5c;
+      background: var(--sdot-saved);
     }
 
     .sdot.dirty {
-      background: #e8a838;
+      background: var(--sdot-dirty);
     }
 
     /* toast */
@@ -1425,14 +1354,12 @@
       }
       .main { min-height: 0; }
       /* Reveal hover-only row controls on touch (no :hover to trigger them) */
-      .inf-close-btn,
-      .con-close-btn { opacity: 1; }
+      .inf-close-btn { opacity: 1; }
       .title-inp { font-size: 22px; }
     }
 
     @media (hover: none) {
-      .inf-close-btn,
-      .con-close-btn { opacity: 1; }
+      .inf-close-btn { opacity: 1; }
     }
 
     /* ── REDUCED MOTION ── */
@@ -1462,14 +1389,14 @@
         <input type="text" id="search" placeholder="search…">
       </div>
       <div class="rail-tabs" role="tablist" aria-label="Views">
-        <button class="rail-tab active" data-tab="notes" role="tab" aria-selected="true">Notes</button>
-        <button class="rail-tab" data-tab="actions" role="tab" aria-selected="false">Actions</button>
-        <button class="rail-tab" data-tab="tags" role="tab" aria-selected="false">Tags</button>
+        <button class="rail-tab active" id="tab-notes" data-tab="notes" role="tab" aria-selected="true" aria-controls="note-list">Notes</button>
+        <button class="rail-tab" id="tab-actions" data-tab="actions" role="tab" aria-selected="false" aria-controls="con-actions">Actions</button>
+        <button class="rail-tab" id="tab-tags" data-tab="tags" role="tab" aria-selected="false" aria-controls="con-tags">Tags</button>
       </div>
 
-      <div class="note-list visible" id="note-list"></div>
+      <div class="note-list visible" id="note-list" role="tabpanel" aria-labelledby="tab-notes"></div>
 
-      <div class="consolidated" id="con-actions">
+      <div class="consolidated" id="con-actions" role="tabpanel" aria-labelledby="tab-actions">
         <div class="con-filter">
           <input type="text" id="filter-actions" placeholder="filter actions…">
         </div>
@@ -1478,7 +1405,7 @@
         </div>
       </div>
 
-      <div class="consolidated" id="con-tags">
+      <div class="consolidated" id="con-tags" role="tabpanel" aria-labelledby="tab-tags">
         <div class="con-filter">
           <input type="text" id="filter-tags" placeholder="filter tags…">
         </div>
@@ -1553,7 +1480,7 @@
       <h3>Delete note?</h3>
       <p>This cannot be undone.</p>
       <div class="modal-btns">
-        <button class="mb" onclick="app.closeModal()">cancel</button>
+        <button class="mb" id="del-cancel" onclick="app.closeModal()">cancel</button>
         <button class="mb p" onclick="app.doDelete()">delete</button>
       </div>
     </div>
@@ -1655,6 +1582,7 @@
             meetingId: meeting.id,
             meetingTitle: meeting.title || 'Untitled',
             meetingDate: meeting.date || '',
+            idx: a.idx,
             owners: a.owners,
             text: a.text,
             fullText: a.fullText,
@@ -1716,6 +1644,18 @@
         btn.addEventListener('click', () => switchTab(btn.dataset.tab));
       });
 
+      // Arrow keys move between tabs (standard tablist keyboard behavior)
+      document.querySelector('.rail-tabs').addEventListener('keydown', e => {
+        if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return;
+        const tabs = [...document.querySelectorAll('.rail-tab')];
+        const i = tabs.indexOf(document.activeElement);
+        if (i < 0) return;
+        e.preventDefault();
+        const next = tabs[(i + (e.key === 'ArrowRight' ? 1 : tabs.length - 1)) % tabs.length];
+        next.focus();
+        switchTab(next.dataset.tab);
+      });
+
       function switchTab(tab) {
         activeTab = tab;
         document.querySelectorAll('.rail-tab').forEach(b => {
@@ -1734,7 +1674,7 @@
         // Hide table container when switching away from actions
         const tableContainer = document.getElementById('actions-table-container');
         if (tableContainer) {
-          tableContainer.style.display = (tab === 'actions' && actionsView.mode !== 'list') ? 'block' : 'none';
+          tableContainer.style.display = (tab === 'actions') ? 'block' : 'none';
         }
 
         // Hide tags table container when switching away from tags
@@ -1764,11 +1704,25 @@
           if (tc) tc.style.display = 'block';
         }
 
-        if (tab === 'actions') renderConsolidated('actions');
+        if (tab === 'actions') renderConsolidated();
         if (tab === 'tags') renderTagsPanel();
       }
 
       // ── CONSOLIDATED VIEW ──
+      // Get-or-create one of the dynamically inserted main-area table panels
+      // (#actions-table-container / #tags-table-container). switchTab handles
+      // hiding them when the rail tab changes.
+      function ensureMainPanel(id) {
+        let c = document.getElementById(id);
+        if (!c) {
+          c = document.createElement('div');
+          c.id = id;
+          c.className = 'actions-table-container';
+          document.querySelector('.main').appendChild(c);
+        }
+        return c;
+      }
+
       // Render person list in Actions tab
       function renderActionsByPerson() {
         const q = elFilterActions.value.toLowerCase();
@@ -1793,11 +1747,11 @@
           : '';
         const openTotal = data.actions.filter(a => !a.isDone).length;
         const navHtml = `
-      <div class="person-item${actionsView.mode === 'review' ? ' person-item-active' : ''}" onclick="app.showReview()">
+      <div class="person-item${actionsView.mode === 'review' ? ' person-item-active' : ''}" tabindex="0" role="button" onclick="app.showReview()">
         <div class="person-name">⚑ Review${reviewBadge}</div>
         <div class="person-count">${reviewN ? `${reviewN} need${reviewN === 1 ? 's' : ''} attention` : 'all clear'}</div>
       </div>
-      <div class="person-item${actionsView.mode === 'all' ? ' person-item-active' : ''}" onclick="app.showAllActions()">
+      <div class="person-item${actionsView.mode === 'all' ? ' person-item-active' : ''}" tabindex="0" role="button" onclick="app.showAllActions()">
         <div class="person-name">All actions</div>
         <div class="person-count">${openTotal} open</div>
       </div>`;
@@ -1807,7 +1761,7 @@
           return;
         }
 
-        const today = new Date().toISOString().slice(0, 10);
+        const today = localDateStr();
         elListActions.innerHTML = navHtml + people.map(person => {
           const actions = byPerson[person];
           const openCount = actions.filter(a => !a.isDone).length;
@@ -1816,7 +1770,7 @@
           const isSelected = actionsView.mode === 'detail' && actionsView.selectedPerson === person;
           const overdueTag = overdueCount ? ` &nbsp;<span class="dl-badge dl-overdue">${overdueCount} overdue</span>` : '';
           return `
-      <div class="person-item${isSelected ? ' person-item-active' : ''}" onclick="app.showPersonActions('${esc(person)}')">
+      <div class="person-item${isSelected ? ' person-item-active' : ''}" tabindex="0" role="button" onclick="app.showPersonActions('${esc(person)}')">
         <div class="person-name">@${esc(person)}</div>
         <div class="person-count">${openCount} open${overdueTag}${doneCount ? `, ${doneCount} done` : ''}</div>
       </div>`;
@@ -1830,21 +1784,21 @@
           .filter(a => a.owners.includes(person) && (!q || a.text.toLowerCase().includes(q)))
           .sort((a, b) => (b.meetingDate || '').localeCompare(a.meetingDate || ''));
 
-        // Keep showing the full person list in the sidebar, but highlight the selected person
-        // The renderActionsByPerson function will handle this by checking actionsView.selectedPerson
+        // The sidebar person list stays visible; renderActionsByPerson
+        // highlights the selected person via actionsView.selectedPerson.
+        const tableContainer = ensureMainPanel('actions-table-container');
 
-        // Show table in main frame
         if (!actions.length) {
           elEmpty.style.display = 'flex';
           elEmpty.textContent = 'No actions for @' + person;
           elEditor.style.display = 'none';
+          tableContainer.style.display = 'none';
           return;
         }
 
         elEmpty.style.display = 'none';
         elEditor.style.display = 'none';
 
-        // Show table
         let tableHTML = `
     <div class="actions-table-wrap">
       <div class="actions-table-header">
@@ -1867,10 +1821,10 @@
         for (const a of actions) {
           const statusCell = a.isDone
             ? `<td class="status-done">${esc(a.doneNote)}</td>`
-            : `<td class="status-open"><button class="table-close-btn" data-action="${esc(JSON.stringify(a))}" onclick="app.closeActionFromTable(this, '${a.meetingId}')">Mark done</button></td>`;
+            : `<td class="status-open"><button class="table-close-btn" data-mid="${a.meetingId}" data-idx="${a.idx}" data-full="${esc(a.fullText)}" onclick="event.stopPropagation();app.markDone(this)">Mark done</button></td>`;
 
           tableHTML += `
-      <tr class="${a.isDone ? 'row-done' : ''}" onclick="app.openNote('${a.meetingId}', true)">
+      <tr class="${a.isDone ? 'row-done' : ''}" tabindex="0" onclick="app.openNote('${a.meetingId}', true)">
         <td class="action-text">${esc(a.text)}</td>
         <td>${deadlineBadge(a.deadline)}</td>
         <td class="meeting-title">${esc(a.meetingTitle || 'Untitled')}</td>
@@ -1886,15 +1840,6 @@
     </div>
   `;
 
-        // Insert table into main area (after .editor)
-        const main = document.querySelector('.main');
-        let tableContainer = document.getElementById('actions-table-container');
-        if (!tableContainer) {
-          tableContainer = document.createElement('div');
-          tableContainer.id = 'actions-table-container';
-          tableContainer.className = 'actions-table-container';
-          main.appendChild(tableContainer);
-        }
         tableContainer.innerHTML = tableHTML;
         tableContainer.style.display = 'block';
       }
@@ -1919,14 +1864,7 @@
           return (a.meetingDate || '').localeCompare(b.meetingDate || '');
         });
 
-        const main = document.querySelector('.main');
-        let tableContainer = document.getElementById('actions-table-container');
-        if (!tableContainer) {
-          tableContainer = document.createElement('div');
-          tableContainer.id = 'actions-table-container';
-          tableContainer.className = 'actions-table-container';
-          main.appendChild(tableContainer);
-        }
+        const tableContainer = ensureMainPanel('actions-table-container');
 
         if (!actions.length) {
           elEmpty.style.display = 'flex';
@@ -1962,10 +1900,10 @@
         for (const a of actions) {
           const statusCell = a.isDone
             ? `<td class="status-done">${esc(a.doneNote)}</td>`
-            : `<td class="status-open"><button class="table-close-btn" data-action="${esc(JSON.stringify(a))}" onclick="app.closeActionFromTable(this, '${a.meetingId}')">Mark done</button></td>`;
+            : `<td class="status-open"><button class="table-close-btn" data-mid="${a.meetingId}" data-idx="${a.idx}" data-full="${esc(a.fullText)}" onclick="event.stopPropagation();app.markDone(this)">Mark done</button></td>`;
           const ownersDisplay = a.owners.map(o => `@${esc(o)}`).join(', ');
           tableHTML += `
-      <tr class="${a.isDone ? 'row-done' : ''}" onclick="app.openNote('${a.meetingId}', true)">
+      <tr class="${a.isDone ? 'row-done' : ''}" tabindex="0" onclick="app.openNote('${a.meetingId}', true)">
         <td class="action-text">${esc(a.text)}</td>
         <td>${deadlineBadge(a.deadline)}</td>
         <td class="action-owners">${ownersDisplay}</td>
@@ -1993,33 +1931,17 @@
       // Track current view state for tags tab
       let tagsView = { mode: 'list', selectedTag: null };
 
-      function renderConsolidated(type) {
-        if (actionsView.mode === 'review') {
-          renderActionsByPerson();
-          renderReview();
-        } else if (actionsView.mode === 'all') {
-          renderActionsByPerson();
-          renderAllActions();
-        } else if (actionsView.mode === 'list') {
-          renderActionsByPerson();
-        } else {
-          renderActionsByPerson();
-          renderActionsForPerson(actionsView.selectedPerson);
-        }
+      function renderConsolidated() {
+        renderActionsByPerson();
+        if (actionsView.mode === 'review') renderReview();
+        else if (actionsView.mode === 'all') renderAllActions();
+        else renderActionsForPerson(actionsView.selectedPerson);
       }
 
-      elFilterActions.addEventListener('input', () => {
-        if (actionsView.mode === 'review') { renderActionsByPerson(); renderReview(); }
-        else if (actionsView.mode === 'all') { renderActionsByPerson(); renderAllActions(); }
-        else if (actionsView.mode === 'list') renderActionsByPerson();
-        else renderActionsForPerson(actionsView.selectedPerson);
-      });
+      elFilterActions.addEventListener('input', renderConsolidated);
       elFilterTags.addEventListener('input', renderTagsPanel);
 
-      // Input event listener is already set up in the contenteditable keyboard handlers section
-
       function onNotesChange(text) {
-
         const actions = parseActions(text);
         const decisions = parseDecisions(text);
         updateInferred(actions, decisions);
@@ -2083,6 +2005,48 @@
       }
 
       // ── CONTENTEDITABLE KEYBOARD HANDLERS ──
+      // Split the current <li> at the caret, moving trailing content into a
+      // new sibling <li>. Shared by the Enter key and shortcut expansion.
+      function splitCurrentListItem() {
+        const sel = window.getSelection();
+        if (!sel.rangeCount) return;
+        const range = sel.getRangeAt(0);
+        const currentLi = range.startContainer.nodeType === Node.TEXT_NODE
+          ? range.startContainer.parentElement.closest('li')
+          : range.startContainer.closest('li');
+        if (!currentLi) return;
+
+        // Extract content after cursor into the new li
+        const splitRange = document.createRange();
+        splitRange.setStart(range.endContainer, range.endOffset);
+        splitRange.setEnd(currentLi, currentLi.childNodes.length);
+        const afterContent = splitRange.extractContents();
+
+        const newLi = document.createElement('li');
+        const hasContent = afterContent.textContent.length > 0 || afterContent.querySelector('ul, ol');
+        if (hasContent) {
+          newLi.appendChild(afterContent);
+        } else {
+          newLi.innerHTML = '<br>';
+        }
+
+        // Ensure current li has a placeholder if now empty
+        if (!currentLi.textContent && !currentLi.querySelector('ul, ol, br')) {
+          currentLi.innerHTML = '<br>';
+        }
+
+        currentLi.parentElement.insertBefore(newLi, currentLi.nextSibling);
+
+        // Move cursor to start of new li
+        const newRange = document.createRange();
+        newRange.setStart(newLi, 0);
+        newRange.collapse(true);
+        sel.removeAllRanges();
+        sel.addRange(newRange);
+
+        elNotes.dispatchEvent(new Event('input'));
+      }
+
       elNotes.addEventListener('keydown', e => {
         // Expand !today / !tomorrow / !nextweek shortcuts on Space or Enter
         if (e.key === ' ' || e.key === 'Enter') {
@@ -2108,57 +2072,26 @@
                 sel.removeAllRanges();
                 sel.addRange(newRange);
                 elNotes.dispatchEvent(new Event('input'));
-                if (e.key === 'Enter') {
-                  // Fall through to normal Enter handling by re-dispatching
-                  elNotes.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
-                }
+                if (e.key === 'Enter') splitCurrentListItem();
                 return;
               }
             }
           }
         }
 
-        // Handle Enter: create new <li> at same nesting level
+        // Enter creates a new <li> at the same level
         if (e.key === 'Enter') {
           e.preventDefault();
-          const sel = window.getSelection();
-          const range = sel.getRangeAt(0);
-          const currentLi = range.startContainer.nodeType === Node.TEXT_NODE
-            ? range.startContainer.parentElement.closest('li')
-            : range.startContainer.closest('li');
-
-          if (currentLi) {
-            // Extract content after cursor into the new li
-            const splitRange = document.createRange();
-            splitRange.setStart(range.endContainer, range.endOffset);
-            splitRange.setEnd(currentLi, currentLi.childNodes.length);
-            const afterContent = splitRange.extractContents();
-
-            const newLi = document.createElement('li');
-            const hasContent = afterContent.textContent.length > 0 || afterContent.querySelector('ul, ol');
-            if (hasContent) {
-              newLi.appendChild(afterContent);
-            } else {
-              newLi.innerHTML = '<br>';
-            }
-
-            // Ensure current li has a placeholder if now empty
-            if (!currentLi.textContent && !currentLi.querySelector('ul, ol, br')) {
-              currentLi.innerHTML = '<br>';
-            }
-
-            currentLi.parentElement.insertBefore(newLi, currentLi.nextSibling);
-
-            // Move cursor to start of new li
-            const newRange = document.createRange();
-            newRange.setStart(newLi, 0);
-            newRange.collapse(true);
-            sel.removeAllRanges();
-            sel.addRange(newRange);
-
-            elNotes.dispatchEvent(new Event('input'));
-          }
+          splitCurrentListItem();
         }
+      });
+
+      // Force pasted content to plain text — rich HTML would inject arbitrary
+      // markup into the one-line-per-<li> structure the round-trip relies on.
+      elNotes.addEventListener('paste', e => {
+        e.preventDefault();
+        const text = (e.clipboardData || window.clipboardData).getData('text/plain');
+        if (text) document.execCommand('insertText', false, text);
       });
 
       elNotes.addEventListener('input', () => onNotesChange(htmlToText(elNotes.innerHTML)));
@@ -2175,56 +2108,78 @@
         if (person) { openPersonModal(person.dataset.person); return; }
       });
 
+      // Keyboard activation for the focusable rows rendered with tabindex="0"
+      // (note list, person/tag lists, table rows, modal entries, backlinks).
+      document.addEventListener('keydown', e => {
+        if (e.key !== 'Enter' && e.key !== ' ') return;
+        const t = e.target;
+        if (t instanceof Element &&
+            t.matches('.ni, .person-item, .tag-item, .tagm-item, .backlink-mtg, tr[tabindex]')) {
+          e.preventDefault();
+          t.click();
+        }
+      });
+
       // ── DEADLINE SHORTCUTS ──
       function expandDeadlineShortcuts(text) {
         const today = new Date();
-        const fmt = d => d.toISOString().slice(0, 10);
         const tomorrow = new Date(today); tomorrow.setDate(today.getDate() + 1);
         const nextWeek = new Date(today); nextWeek.setDate(today.getDate() + 7);
         return text
-          .replace(/!today\b/gi,    `!${fmt(today)}`)
-          .replace(/!tomorrow\b/gi, `!${fmt(tomorrow)}`)
-          .replace(/!nextweek\b/gi, `!${fmt(nextWeek)}`);
+          .replace(/!today\b/gi,    `!${localDateStr(today)}`)
+          .replace(/!tomorrow\b/gi, `!${localDateStr(tomorrow)}`)
+          .replace(/!nextweek\b/gi, `!${localDateStr(nextWeek)}`);
       }
 
       // ── PARSE ──
+      // Markers shared by every note-line parser (actions, tag entries).
+      const BULLET_RE = /^[→>*\-\d.]+\s*/;
+      const DEADLINE_RE = /!(\d{4}-\d{2}-\d{2})/;
+      const DONE_RE = /\[(done|closed):\s*(.*?)\]\s*$/i;
+
+      // Extract deadline / completion state and the marker-free display text
+      // from a cleaned (tab-stripped, shortcut-expanded) note line.
+      function parseLineMeta(line) {
+        const dlMatch = line.match(DEADLINE_RE);
+        const doneMatch = line.match(DONE_RE);
+        const text = line
+          .replace(BULLET_RE, '')
+          .replace(DONE_RE, '')
+          .replace(/!\d{4}-\d{2}-\d{2}/g, '')
+          .replace(/\s+/g, ' ').trim();
+        return {
+          text,
+          deadline: dlMatch ? dlMatch[1] : null,
+          isDone: !!doneMatch,
+          doneNote: doneMatch ? doneMatch[2].trim() : '',
+        };
+      }
+
       function parseActions(text) {
         const out = [];
-        for (const raw of text.split('\n')) {
-          const line = raw.replace(/^\t+/, '').trim();
+        const lines = text.split('\n');
+        for (let idx = 0; idx < lines.length; idx++) {
+          const line = lines[idx].replace(/^\t+/, '').trim();
           if (!line) continue;
           const mentions = [...line.matchAll(/@([a-zA-Z0-9_.+-]+)/g)];
           if (!mentions.length) continue;
 
-          // Keep full text (with @mentions intact) for display
-          let fullText = line.replace(/^[→\-\*\d.]+\s*/, '').replace(/\s+/g, ' ').trim();
+          // Full text (with @mentions intact, shortcuts expanded) — used to
+          // re-locate the source line when an action is rewritten.
+          const fullText = expandDeadlineShortcuts(
+            line.replace(BULLET_RE, '').replace(/\s+/g, ' ').trim());
+          const meta = parseLineMeta(fullText);
+          if (!meta.text) continue;
 
-          // Expand deadline shortcuts before extracting
-          fullText = expandDeadlineShortcuts(fullText);
-
-          // Extract deadline marker: !YYYY-MM-DD
-          const deadlineMatch = fullText.match(/!(\d{4}-\d{2}-\d{2})/);
-          const deadline = deadlineMatch ? deadlineMatch[1] : null;
-
-          // Check for completion marker: [done: ...] or [closed: ...]
-          const doneMatch = fullText.match(/\[(done|closed):\s*(.+?)\]\s*$/i);
-          const isDone = !!doneMatch;
-          const doneNote = doneMatch ? doneMatch[2].trim() : '';
-
-          // Strip markers from display text
-          let displayText = isDone ? fullText.replace(/\[(done|closed):.+?\]\s*$/i, '').trim() : fullText;
-          displayText = displayText.replace(/!\d{4}-\d{2}-\d{2}/g, '').replace(/\s+/g, ' ').trim();
-
-          if (displayText) {
-            out.push({
-              owners: mentions.map(m => m[1].toLowerCase()),
-              text: displayText,
-              fullText: fullText,  // original with marker intact
-              isDone,
-              doneNote,
-              deadline,
-            });
-          }
+          out.push({
+            idx,  // line number in the meeting's notes
+            owners: mentions.map(m => m[1].toLowerCase()),
+            text: meta.text,
+            fullText,
+            isDone: meta.isDone,
+            doneNote: meta.doneNote,
+            deadline: meta.deadline,
+          });
         }
         return out;
       }
@@ -2266,7 +2221,7 @@
         ${a.deadline ? deadlineBadge(a.deadline) : ''}
         ${a.isDone
               ? `<span class="inf-done-note">${esc(a.doneNote)}</span>`
-              : `<button class="inf-close-btn" onclick="app.closeAction(this)" data-fulltext="${esc(a.fullText)}" title="Mark done">✓</button>`
+              : `<button class="inf-close-btn" onclick="app.markDone(this)" data-mid="${currentId}" data-idx="${a.idx}" data-full="${esc(a.fullText)}" title="Mark done">✓</button>`
             }
       </div>`).join('');
           elActSec.style.display = '';
@@ -2304,7 +2259,7 @@
       <div class="inf-row backlink-row">
         <span class="tag-link" data-tag="${esc(r.tag)}">#${esc(r.tag)}</span>
         <span class="backlink-meetings">${r.others
-          .map(m => `<span class="backlink-mtg" onclick="app.openNote('${m.id}', true)">${esc(m.title || 'Untitled')}</span>`)
+          .map(m => `<span class="backlink-mtg" tabindex="0" role="button" onclick="app.openNote('${m.id}', true)">${esc(m.title || 'Untitled')}</span>`)
           .join('<span class="sep">·</span>')}</span>
       </div>`).join('');
         elLinkSec.style.display = '';
@@ -2341,7 +2296,7 @@
           const tagHtml = tags.length
             ? `<div class="ni-tags">${tags.map(t => `<span class="tag-chip" onclick="event.stopPropagation();app.filterByTag('${esc(t)}')">#${esc(t)}</span>`).join('')}</div>`
             : '';
-          return `<div class="ni${m.id === currentId ? ' active' : ''}" onclick="app.openNote('${m.id}')">
+          return `<div class="ni${m.id === currentId ? ' active' : ''}" tabindex="0" role="button" onclick="app.openNote('${m.id}')">
       <div class="ni-title">${esc(m.title || 'Untitled')}</div>
       ${sub ? `<div class="ni-sub">${esc(sub)}</div>` : ''}
       ${tagHtml}
@@ -2351,17 +2306,18 @@
 
       // ── OPEN / NEW / SAVE / DELETE ──
       function openNote(id, keepTab = false) {
+        const m = data.meetings[id];
+        if (!m) return;
+
         clearTimeout(noteTimer.t); clearTimeout(metaTimer.t);
-        // Fix 4: flush both save paths so no changes are lost on note switch
+        // Flush both save paths so no changes are lost on note switch
         if (isDirty && currentId) { saveMeta(); saveNote(htmlToText(elNotes.innerHTML)); }
 
-        // Fix 7: set currentId before switchTab so any reads during tab switch see the new id
+        // Set currentId before switchTab so any reads during tab switch see the new id
         currentId = id;
 
         // Switch to notes tab unless keepTab is true (e.g. when peeking from Actions tab)
         if (!keepTab && activeTab !== 'notes') switchTab('notes');
-        const m = data.meetings[id];
-        if (!m) return;
 
         elEmpty.style.display = 'none';
         elEditor.style.display = 'flex';
@@ -2391,7 +2347,7 @@
 
       function newNote() {
         clearTimeout(noteTimer.t); clearTimeout(metaTimer.t);
-        // Fix 4: flush both save paths before creating new note
+        // Flush both save paths before creating new note
         if (isDirty && currentId) { saveMeta(); saveNote(htmlToText(elNotes.innerHTML)); }
 
         const id = newId();
@@ -2399,7 +2355,7 @@
         data.meetings[id] = {
           id,
           title: '', notes: '',
-          date: now.toISOString().slice(0, 10),
+          date: localDateStr(now),
           time: now.toTimeString().slice(0, 5),
           createdAt: now.toISOString(),
           updatedAt: now.toISOString(),
@@ -2424,7 +2380,7 @@
         saveData();
         if (!metaTimer.t) setDirty(false);
         updateReviewBadge();
-        if (activeTab === 'actions') renderConsolidated('actions');
+        if (activeTab === 'actions') renderConsolidated();
       }
 
       // saveMeta: write title/date/time, reindex, redraw list.
@@ -2441,10 +2397,13 @@
         saveData();
         if (!noteTimer.t) setDirty(false);
         renderList();
-        if (activeTab === 'actions') renderConsolidated('actions');
+        if (activeTab === 'actions') renderConsolidated();
       }
 
-      function confirmDelete() { elDelModal.classList.add('open'); }
+      function confirmDelete() {
+        elDelModal.classList.add('open');
+        document.getElementById('del-cancel').focus();
+      }
       function closeModal() { elDelModal.classList.remove('open'); }
 
       // ── INPUT MODAL ──
@@ -2491,7 +2450,6 @@
       function doDelete() {
         if (!currentId) return;
         clearTimeout(noteTimer.t); clearTimeout(metaTimer.t);
-        // Fix 10: clear index directly rather than passing a stub to indexMeeting
         clearIndex(currentId);
         delete data.meetings[currentId];
         saveData();
@@ -2500,17 +2458,16 @@
         elEditor.style.display = 'none';
         elEmpty.style.display = 'flex';
         renderList();
-        if (activeTab === 'actions') renderConsolidated('actions');
+        if (activeTab === 'actions') renderConsolidated();
         showToast('deleted');
       }
 
       // ── DIRTY / AUTO-SAVE ──
-      // Fix 2/9: separate timers for notes vs meta so neither cancels the other.
-      // Fix 9: shared scheduler to avoid duplicating the debounce pattern.
+      // Separate timers for notes vs meta so neither cancels the other.
       const noteTimer = { t: null };  // auto-save timer for notes text
       const metaTimer = { t: null };  // auto-save timer for title/date/time
 
-      // Fix 9: single debounce implementation shared by both save paths
+      // Single debounce implementation shared by both save paths
       function scheduleSave(timer, saveFn, arg) {
         setDirty(true);
         clearTimeout(timer.t);
@@ -2521,7 +2478,6 @@
         }, 1800);
       }
 
-      // Fix 2: separate timers — typing notes no longer cancels pending meta save
       function markDirty(cachedText) {
         // Convert HTML to text if not provided
         if (!cachedText) cachedText = htmlToText(elNotes.innerHTML);
@@ -2539,7 +2495,7 @@
         if (date) parts.push(fmtDate(date));
         if (actions.length) parts.push(`${actions.length} action${actions.length !== 1 ? 's' : ''}`);
         if (decisions.length) parts.push(`${decisions.length} decision${decisions.length !== 1 ? 's' : ''}`);
-        const today = new Date().toISOString().slice(0, 10);
+        const today = localDateStr();
         const overdueCount = actions.filter(a => !a.isDone && a.deadline && a.deadline < today).length;
         if (overdueCount) parts.push(`${overdueCount} overdue`);
         elStxt.textContent = parts.join(' · ') || '—';
@@ -2550,7 +2506,7 @@
         const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
         const a = Object.assign(document.createElement('a'), {
           href: URL.createObjectURL(blob),
-          download: `minutes-${new Date().toISOString().slice(0, 10)}.json`,
+          download: `minutes-${localDateStr()}.json`,
         });
         a.click();
         URL.revokeObjectURL(a.href);
@@ -2581,13 +2537,34 @@
         input.value = '';
       }
 
+      // Immediately run whichever save paths have a pending debounce timer.
+      function flushPendingSaves() {
+        if (noteTimer.t) { clearTimeout(noteTimer.t); noteTimer.t = null; saveNote(htmlToText(elNotes.innerHTML)); }
+        if (metaTimer.t) { clearTimeout(metaTimer.t); metaTimer.t = null; saveMeta(); }
+      }
+
+      // Debounced saves would silently lose the last ~2s of typing if the tab
+      // closes or backgrounds mid-debounce — flush them on page hide. IndexedDB
+      // writes started during unload aren't guaranteed to commit, so when a
+      // flush actually had pending changes, also write a synchronous
+      // localStorage backstop that init restores (and clears) on next load.
+      const FLUSH_KEY = DB_KEY + '_flush';
+      window.addEventListener('pagehide', () => {
+        const hadPending = noteTimer.t || metaTimer.t;
+        flushPendingSaves();
+        if (hadPending) {
+          try { localStorage.setItem(FLUSH_KEY, JSON.stringify(data)); } catch (e) { /* quota/private mode */ }
+        }
+      });
+      document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'hidden') flushPendingSaves();
+      });
+
       // ── GLOBAL KEYBOARD ──
       document.addEventListener('keydown', e => {
         if ((e.metaKey || e.ctrlKey) && e.key === 's') {
           e.preventDefault();
-          // Fix 3: only run the save path(s) that have a pending timer
-          if (noteTimer.t) { clearTimeout(noteTimer.t); noteTimer.t = null; saveNote(htmlToText(elNotes.innerHTML)); }
-          if (metaTimer.t) { clearTimeout(metaTimer.t); metaTimer.t = null; saveMeta(); }
+          flushPendingSaves();
           if (isDirty) showToast('saved');
         }
         if ((e.metaKey || e.ctrlKey) && e.key === 'n') {
@@ -2605,6 +2582,12 @@
       elSearch.addEventListener('input', renderList);
 
       // ── UTILS ──
+      // Local-time YYYY-MM-DD. toISOString() is UTC and shifts the date for
+      // anyone not on UTC, so deadlines/"today" must always come from here.
+      function localDateStr(d = new Date()) {
+        return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+      }
+
       function fmtDate(d) {
         if (!d) return '';
         const [y, m, day] = d.split('-');
@@ -2613,7 +2596,7 @@
 
       function deadlineBadge(deadline) {
         if (!deadline) return '';
-        const today = new Date().toISOString().slice(0, 10);
+        const today = localDateStr();
         const cls = deadline < today ? 'dl-overdue' : deadline === today ? 'dl-today' : 'dl-upcoming';
         return `<span class="dl-badge ${cls}">${fmtDate(deadline)}</span>`;
       }
@@ -2666,7 +2649,7 @@
             }
             renderList();
             updateReviewBadge();
-            if (activeTab === 'actions') renderConsolidated('actions');
+            if (activeTab === 'actions') renderConsolidated();
             showToast('undone');
           },
         });
@@ -2674,88 +2657,23 @@
 
 
       // ── CLOSE ACTION ──
-      async function closeAction(btn) {
-        const fullText = btn.dataset.fulltext;
-        if (!fullText) return;
+      // Single mark-done flow shared by the inferred panel, the action tables,
+      // and the Review inbox. The button carries data-mid / data-idx / data-full.
+      async function markDone(btn) {
+        flushPendingSaves();  // notes may have unsaved edits; line idx must match disk
+        const mid = btn.dataset.mid, idx = +btn.dataset.idx, full = btn.dataset.full;
+        if (!full) return;
 
         const note = await inputModal({ title: 'Mark action done', placeholder: 'Closure note (optional)', confirmText: 'Mark done' });
         if (note === null) return; // cancelled
 
-        const meeting = data.meetings[currentId];
-        if (!meeting) return;
-
-        const undoId = currentId, prevNotes = meeting.notes, prevUpd = meeting.updatedAt;
-
-        // Find and update the line in the notes
-        const lines = meeting.notes.split('\n');
-        const targetIdx = lines.findIndex(line => {
-          const cleaned = line.replace(/^\t+/, '').trim();
-          return cleaned.includes(fullText);
-        });
-
-        if (targetIdx >= 0) {
-          lines[targetIdx] += ` [done: ${note}]`;
-          meeting.notes = lines.join('\n');
-          meeting.updatedAt = new Date().toISOString();
-
-          // Update contenteditable if this is the current note
-          elNotes.innerHTML = textToHTML(meeting.notes);
-
-
-          // Re-parse and update displays
-          const actions = parseActions(meeting.notes);
-          const decisions = parseDecisions(meeting.notes);
-          updateInferred(actions, decisions);
-          updateStatusBar(meeting.date, actions, decisions);
-
-          // Re-index and save
-          indexMeeting(meeting);
-          saveData();
-
-          // Refresh consolidated if visible
-          if (activeTab === 'actions') renderConsolidated('actions');
-          showUndo('marked done', undoId, prevNotes, prevUpd);
+        const m = data.meetings[mid];
+        const prevNotes = m ? m.notes : null, prevUpd = m ? m.updatedAt : null;
+        if (rewriteActionLine(mid, idx, full, l => `${l} [done: ${note}]`)) {
+          refreshAfterRewrite();
+          showUndo('marked done', mid, prevNotes, prevUpd);
         }
       }
-
-      async function closeActionFromTable(btn, meetingId) {
-        const note = await inputModal({ title: 'Mark action done', placeholder: 'Closure note (optional)', confirmText: 'Mark done' });
-        if (note === null) return;
-
-        const actionData = JSON.parse(btn.dataset.action);
-        const meeting = data.meetings[meetingId];
-        if (!meeting) return;
-
-        const prevNotes = meeting.notes, prevUpd = meeting.updatedAt;
-
-        const lines = meeting.notes.split('\n');
-        const targetIdx = lines.findIndex(line => {
-          const cleaned = line.replace(/^\t+/, '').trim();
-          return cleaned.includes(actionData.fullText);
-        });
-
-        if (targetIdx >= 0) {
-          lines[targetIdx] += ` [done: ${note}]`;
-          meeting.notes = lines.join('\n');
-          meeting.updatedAt = new Date().toISOString();
-
-          if (currentId === meetingId) {
-            elNotes.innerHTML = textToHTML(meeting.notes);
-            const actions = parseActions(meeting.notes);
-            const decisions = parseDecisions(meeting.notes);
-            updateInferred(actions, decisions);
-            updateStatusBar(meeting.date, actions, decisions);
-          }
-
-          indexMeeting(meeting);
-          saveData();
-
-          // Refresh the table view (handles detail + all-actions modes)
-          if (activeTab === 'actions') renderConsolidated('actions');
-          showUndo('marked done', meetingId, prevNotes, prevUpd);
-        }
-      }
-
 
       // ── TAGS PANEL ──
       function renderTagsPanel() {
@@ -2774,7 +2692,7 @@
           ? entries.map(([tag, count]) => {
               const isSelected = tagsView.selectedTag === tag;
               return `
-          <div class="tag-item${isSelected ? ' tag-item-active' : ''}" onclick="app.filterByTag('${esc(tag)}')">
+          <div class="tag-item${isSelected ? ' tag-item-active' : ''}" tabindex="0" role="button" onclick="app.filterByTag('${esc(tag)}')">
             <span class="tag-item-name">#${esc(tag)}</span>
             <span class="tag-item-count">${count}</span>
           </div>`;
@@ -2820,7 +2738,7 @@
             ? lines.map(l => `<div class="tag-note-line">${esc(l)}</div>`).join('')
             : `<span class="meeting-title">${esc(m.title || 'Untitled')}</span>`;
           tableHTML += `
-      <tr onclick="app.openNote('${m.id}', true)">
+      <tr tabindex="0" onclick="app.openNote('${m.id}', true)">
         <td class="action-text">${noteCell}</td>
         <td class="meeting-title">${esc(m.title || 'Untitled')}</td>
         <td class="meeting-date">${m.date ? fmtDate(m.date) : '—'}</td>
@@ -2832,14 +2750,7 @@
     </div>
 `;
 
-        const main = document.querySelector('.main');
-        let tagsTableContainer = document.getElementById('tags-table-container');
-        if (!tagsTableContainer) {
-          tagsTableContainer = document.createElement('div');
-          tagsTableContainer.id = 'tags-table-container';
-          tagsTableContainer.className = 'actions-table-container';
-          main.appendChild(tagsTableContainer);
-        }
+        const tagsTableContainer = ensureMainPanel('tags-table-container');
         tagsTableContainer.innerHTML = tableHTML;
         tagsTableContainer.style.display = 'block';
       }
@@ -2874,22 +2785,15 @@
             .map(l => l.replace(/^\t+/, '').trim())
             .filter(l => re.test(l));
           for (const raw of lines) {
-            const line = expandDeadlineShortcuts(raw);
-            const dlMatch = line.match(/!(\d{4}-\d{2}-\d{2})/);
-            const doneMatch = line.match(/\[(done|closed):\s*(.+?)\]\s*$/i);
-            const text = line
-              .replace(/^[→>*\-\d.]+\s*/, '')
-              .replace(/\[(done|closed):.+?\]\s*$/i, '')
-              .replace(/!\d{4}-\d{2}-\d{2}/g, '')
-              .replace(/\s+/g, ' ').trim();
-            if (!text) continue;
+            const meta = parseLineMeta(expandDeadlineShortcuts(raw));
+            if (!meta.text) continue;
             entries.push({
               meetingId: m.id,
               title: m.title || 'Untitled',
               meetingDate: m.date || '',
-              text,
-              deadline: dlMatch ? dlMatch[1] : null,
-              isDone: !!doneMatch,
+              text: meta.text,
+              deadline: meta.deadline,
+              isDone: meta.isDone,
             });
           }
         }
@@ -2918,7 +2822,7 @@
         if (e.deadline && !e.isDone) meta.push(deadlineBadge(e.deadline));
         if (e.isDone) meta.push(`<span class="sep">·</span><span>done</span>`);
         return `
-      <div class="tagm-item${e.isDone ? ' done' : ''}" onclick="app.openRefNote('${e.meetingId}')">
+      <div class="tagm-item${e.isDone ? ' done' : ''}" tabindex="0" role="button" onclick="app.openRefNote('${e.meetingId}')">
         <div class="tagm-item-text">${textHTML}</div>
         <div class="tagm-item-meta">${meta.join(' ')}</div>
       </div>`;
@@ -2989,13 +2893,15 @@
       elTagmClose.addEventListener('click', closeTagModal);
       elTagModal.addEventListener('click', e => { if (e.target === elTagModal) closeTagModal(); });
       document.addEventListener('keydown', e => {
-        if (e.key === 'Escape' && elTagModal.classList.contains('open')) closeTagModal();
+        if (e.key !== 'Escape') return;
+        if (elTagModal.classList.contains('open')) closeTagModal();
+        if (elDelModal.classList.contains('open')) closeModal();
       });
 
       window.app = {
         confirmDelete, closeModal, doDelete, newNote, openNote, exportData, importData,
-        closeAction, closeActionFromTable, showPersonActions, showPersonList, filterByTag,
-        showReview, showAllActions, reviewDone, reviewSnooze, reviewReschedule,
+        markDone, showPersonActions, filterByTag,
+        showReview, showAllActions, reviewSnooze, reviewReschedule,
         openTagModal, openPersonModal, openRefNote, closeTagModal
       };
 
@@ -3005,12 +2911,11 @@
         renderActionsForPerson(person);
       }
 
-      function showPersonList() {
+      function showAllActions() {
         actionsView = { mode: 'all', selectedPerson: null };
         renderActionsByPerson();
         renderAllActions();
       }
-      function showAllActions() { showPersonList(); }
 
       function showReview() {
         actionsView = { mode: 'review', selectedPerson: null };
@@ -3021,9 +2926,9 @@
       // ── REVIEW INBOX ──
       // Split open actions into urgency buckets for frictionless review.
       function reviewItems() {
-        const today = new Date().toISOString().slice(0, 10);
+        const today = localDateStr();
         const wk = new Date(); wk.setDate(wk.getDate() + 7);
-        const weekOut = wk.toISOString().slice(0, 10);
+        const weekOut = localDateStr(wk);
         const overdue = [], dueSoon = [], noDate = [];
         for (const a of data.actions) {
           if (a.isDone) continue;
@@ -3057,20 +2962,20 @@
 
       function reviewRow(a) {
         const owners = a.owners.map(o => '@' + esc(o)).join(', ');
-        const mid = esc(a.meetingId), full = esc(a.fullText);
+        const ref = `data-mid="${esc(a.meetingId)}" data-idx="${a.idx}" data-full="${esc(a.fullText)}"`;
         const snooze = a.deadline
-          ? `<button class="rev-btn" data-mid="${mid}" data-full="${full}" onclick="event.stopPropagation();app.reviewSnooze(this)">Snooze 1w</button>`
+          ? `<button class="rev-btn" ${ref} onclick="event.stopPropagation();app.reviewSnooze(this)">Snooze 1w</button>`
           : '';
         return `
-      <tr onclick="app.openNote('${a.meetingId}', true)">
+      <tr tabindex="0" onclick="app.openNote('${a.meetingId}', true)">
         <td class="action-text">${esc(a.text)}</td>
         <td class="action-owners">${owners}</td>
         <td>${deadlineBadge(a.deadline)}</td>
         <td class="meeting-title">${esc(a.meetingTitle || 'Untitled')}</td>
         <td class="rev-actions">
-          <button class="rev-btn rev-done" data-mid="${mid}" data-full="${full}" onclick="event.stopPropagation();app.reviewDone(this)">Done</button>
+          <button class="rev-btn rev-done" ${ref} onclick="event.stopPropagation();app.markDone(this)">Done</button>
           ${snooze}
-          <button class="rev-btn" data-mid="${mid}" data-full="${full}" onclick="event.stopPropagation();app.reviewReschedule(this)">Reschedule</button>
+          <button class="rev-btn" ${ref} onclick="event.stopPropagation();app.reviewReschedule(this)">Reschedule</button>
         </td>
       </tr>`;
       }
@@ -3108,81 +3013,68 @@
     </div>`;
         }
 
-        const main = document.querySelector('.main');
-        let c = document.getElementById('actions-table-container');
-        if (!c) {
-          c = document.createElement('div');
-          c.id = 'actions-table-container';
-          c.className = 'actions-table-container';
-          main.appendChild(c);
-        }
+        const c = ensureMainPanel('actions-table-container');
         c.innerHTML = html;
         c.style.display = 'block';
       }
 
-      // Find the note line for an action and apply a transform, then persist + refresh.
-      function rewriteActionLine(meetingId, fullText, transform) {
+      // Find the note line for an action and apply a transform, then persist +
+      // refresh. lineIdx is the action's recorded line number; it's verified by
+      // re-parsing the notes (same normalization as fullText), with a fullText
+      // fallback in case the notes shifted. Failure surfaces a toast instead of
+      // silently doing nothing.
+      function rewriteActionLine(meetingId, lineIdx, fullText, transform) {
         const meeting = data.meetings[meetingId];
         if (!meeting) return false;
+        const acts = parseActions(meeting.notes);
+        let action = acts.find(a => a.idx === lineIdx && a.fullText === fullText);
+        if (!action) action = acts.find(a => a.fullText === fullText);
+        if (!action) { showToast('couldn’t find that action line'); return false; }
         const lines = meeting.notes.split('\n');
-        const idx = lines.findIndex(line => line.replace(/^\t+/, '').trim().includes(fullText));
-        if (idx < 0) return false;
-        lines[idx] = transform(lines[idx]);
+        lines[action.idx] = transform(lines[action.idx]);
         meeting.notes = lines.join('\n');
         meeting.updatedAt = new Date().toISOString();
         indexMeeting(meeting);
         saveData();
         if (currentId === meetingId) {
-          elNotes.innerHTML = textToHTML(meeting.notes);
-          const acts = parseActions(meeting.notes);
+          elNotes.innerHTML = textToHTML(meeting.notes) || '<ol><li><br></li></ol>';
+          const newActs = parseActions(meeting.notes);
           const decs = parseDecisions(meeting.notes);
-          updateInferred(acts, decs);
-          updateStatusBar(meeting.date, acts, decs);
+          updateInferred(newActs, decs);
+          updateStatusBar(meeting.date, newActs, decs);
         }
         return true;
       }
 
-      function refreshReview() {
-        renderActionsByPerson();
-        renderReview();
+      // Repaint everything an action rewrite can affect.
+      function refreshAfterRewrite() {
+        renderList();
         updateReviewBadge();
+        if (activeTab === 'actions') renderConsolidated();
       }
 
-      async function reviewDone(btn) {
-        // Match the existing Mark-done buttons: capture a closure note and
-        // store it inline as the action's [done: …] marker.
-        const note = await inputModal({ title: 'Mark action done', placeholder: 'Closure note (optional)', confirmText: 'Mark done' });
-        if (note === null) return;
+      function setReviewDeadline(btn, date, toast) {
         const mid = btn.dataset.mid, m = data.meetings[mid];
         const prevNotes = m ? m.notes : null, prevUpd = m ? m.updatedAt : null;
-        if (rewriteActionLine(mid, btn.dataset.full, l => `${l} [done: ${note}]`)) {
-          refreshReview();
-          showUndo('marked done', mid, prevNotes, prevUpd);
-        }
-      }
-
-      function setReviewDeadline(mid, full, date, toast) {
-        const m = data.meetings[mid];
-        const prevNotes = m ? m.notes : null, prevUpd = m ? m.updatedAt : null;
-        const ok = rewriteActionLine(mid, full, l =>
+        const ok = rewriteActionLine(mid, +btn.dataset.idx, btn.dataset.full, l =>
           /!\d{4}-\d{2}-\d{2}/.test(l) ? l.replace(/!\d{4}-\d{2}-\d{2}/, '!' + date) : `${l} !${date}`);
-        if (ok) { refreshReview(); showUndo(toast, mid, prevNotes, prevUpd); }
+        if (ok) { refreshAfterRewrite(); showUndo(toast, mid, prevNotes, prevUpd); }
       }
 
       function reviewSnooze(btn) {
         const d = new Date(); d.setDate(d.getDate() + 7);
-        setReviewDeadline(btn.dataset.mid, btn.dataset.full, d.toISOString().slice(0, 10), 'snoozed 1 week');
+        setReviewDeadline(btn, localDateStr(d), 'snoozed 1 week');
       }
 
       async function reviewReschedule(btn) {
         const input = await inputModal({
           title: 'Reschedule deadline', type: 'date',
-          initial: new Date().toISOString().slice(0, 10), confirmText: 'Set deadline',
+          initial: localDateStr(), confirmText: 'Set deadline',
         });
         if (input === null) return;
         const v = (input || '').trim();
         if (!/^\d{4}-\d{2}-\d{2}$/.test(v)) { showToast('pick a valid date'); return; }
-        setReviewDeadline(btn.dataset.mid, btn.dataset.full, v, 'rescheduled');
+        setReviewDeadline(btn, v, 'rescheduled');
       }
 
       // Register service worker for offline support
@@ -3206,6 +3098,16 @@
         } else {
           data = stored;
         }
+        // A pagehide flush backstop means the previous session's final
+        // IndexedDB write may not have committed — restore and clear it.
+        try {
+          const flushed = localStorage.getItem(FLUSH_KEY);
+          if (flushed) {
+            data = JSON.parse(flushed);
+            localStorage.removeItem(FLUSH_KEY);
+            await saveData();
+          }
+        } catch (e) { console.warn('flush backstop restore failed:', e); }
         // Populate tags for meetings from older data versions (tags field missing)
         Object.values(data.meetings).forEach(m => { if (!m.tags) m.tags = parseTags(m.notes || ''); });
         renderList();
