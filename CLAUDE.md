@@ -16,7 +16,7 @@ python -m http.server 3000
 
 Then open http://localhost:3000. The same command is wired up in `.claude/launch.json`.
 
-When iterating on `sw.js`, bump the `CACHE` constant (currently `'minutes-v1'`) or unregister the SW in DevTools — otherwise the cached old version will keep serving.
+When iterating on `sw.js` **or shipping any change to `index.html`**, bump the `CACHE` constant in `sw.js` — the SW serves same-origin assets cache-first, so without a bump the cached old version keeps serving.
 
 ## Architecture
 
@@ -50,7 +50,7 @@ The contenteditable layer round-trips through `textToHTML` / `htmlToText`: notes
 Three tabs in the left rail driven by `switchTab(tab)`:
 
 - **Notes** — note list + editor in `<main>`.
-- **Actions** — `actionsView.mode` selects the `<main>` view (all injected into `#actions-table-container`): `review` (default) → `renderReview`, `all` → `renderAllActions`, `detail` → `renderActionsForPerson`. `renderActionsByPerson` draws the sidebar, which always leads with a **Review** inbox + **All actions** nav. The Review inbox (`reviewItems` buckets open actions into Overdue / Due this week / No deadline) offers one-tap Done / Snooze 1w / Reschedule (`reviewDone` / `reviewSnooze` / `reviewReschedule`), each a line rewrite via `rewriteActionLine`. `updateReviewBadge` keeps the count pill on the Actions rail-tab in sync.
+- **Actions** — `actionsView.mode` selects the `<main>` view (all injected into `#actions-table-container`): `review` (default) → `renderReview`, `all` → `renderAllActions`, `detail` → `renderActionsForPerson`. `renderActionsByPerson` draws the sidebar, which always leads with a **Review** inbox + **All actions** nav. The Review inbox (`reviewItems` buckets open actions into Overdue / Due this week / No deadline) offers one-tap Done / Snooze 1w / Reschedule (`markDone` / `reviewSnooze` / `reviewReschedule`), each a line rewrite via `rewriteActionLine`. `markDone` is the single mark-done flow shared by the inferred panel, the action tables, and Review; every mark-done button carries `data-mid` / `data-idx` / `data-full`, and `rewriteActionLine` locates the target line by the action's recorded line index (re-verified by re-parsing) rather than substring matching. `updateReviewBadge` keeps the count pill on the Actions rail-tab in sync.
 - **Tags** — `renderTagsPanel` + `showTagNotes` (table injected via `#tags-table-container`).
 
 **Cross-reference modal (`#tag-modal`).** A shared popup that traces a thread without leaving the editor. `openRefModal({title, entries, highlightRe, empty, unit})` splits entries into two ordered groups — open items with a deadline (soonest first), then everything without a deadline or already completed (newest meeting first) — and paints them via `refItemHTML`; rows call `openRefNote(id)` to jump to the source note. Two collectors feed it: `tagEntries(tag)` (every note line carrying a `#tag`) backs `openTagModal`, and `personEntries(person)` (the denormalized `data.actions` index, filtered by owner) backs `openPersonModal`.
