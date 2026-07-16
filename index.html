@@ -2270,8 +2270,10 @@
       function renderList() {
         updateReviewBadge();
         const q = elSearch.value.toLowerCase().trim();
+        const meetingKey = m => `${m.date || (m.updatedAt || '').slice(0, 10)} ${m.time || ''}`;
         let meetings = Object.values(data.meetings)
-          .sort((a, b) => (b.updatedAt || '').localeCompare(a.updatedAt || ''));
+          .sort((a, b) => meetingKey(b).localeCompare(meetingKey(a)) ||
+            (b.updatedAt || '').localeCompare(a.updatedAt || ''));
 
         if (q) {
           if (q.startsWith('#')) {
