@@ -127,13 +127,32 @@
       opacity: 0.7;
     }
 
+    /* shared search/filter row — one field per tab, below the rail tabs */
     .search-box {
-      padding: 10px 18px 6px;
+      padding: 8px 18px;
       border-bottom: 1px solid var(--faint);
+      flex-shrink: 0;
     }
 
-    .search-box input {
-      width: 100%;
+    .search-field {
+      display: none;
+      align-items: center;
+      gap: 4px;
+      border-bottom: 1px solid var(--faint);
+      transition: border-color 0.12s;
+    }
+
+    .search-field.visible {
+      display: flex;
+    }
+
+    .search-field:focus-within {
+      border-color: var(--muted);
+    }
+
+    .search-field input {
+      flex: 1;
+      min-width: 0;
       border: none;
       background: transparent;
       padding: 4px 0;
@@ -141,16 +160,31 @@
       font-size: 11px;
       color: var(--fg);
       outline: none;
-      border-bottom: 1px solid var(--faint);
-      transition: border-color 0.12s;
     }
 
-    .search-box input::placeholder {
+    .search-field input::placeholder {
       color: var(--subtle);
     }
 
-    .search-box input:focus {
-      border-color: var(--muted);
+    .search-clear {
+      display: none;
+      border: none;
+      background: none;
+      padding: 0 2px;
+      font-family: var(--mono);
+      font-size: 12px;
+      line-height: 1;
+      color: var(--muted);
+      cursor: pointer;
+      transition: color 0.12s;
+    }
+
+    .search-field.has-value .search-clear {
+      display: block;
+    }
+
+    .search-clear:hover {
+      color: var(--fg);
     }
 
     /* rail tabs */
@@ -284,36 +318,6 @@
 
     .consolidated::-webkit-scrollbar-thumb {
       background: var(--faint);
-    }
-
-    .con-filter {
-      position: sticky;
-      top: 0;
-      background: var(--bg);
-      z-index: 1;
-      padding: 8px 12px;
-      border-bottom: 1px solid var(--faint);
-    }
-
-    .con-filter input {
-      width: 100%;
-      border: none;
-      background: transparent;
-      font-family: var(--mono);
-      font-size: 11px;
-      color: var(--fg);
-      outline: none;
-      padding: 2px 0;
-      border-bottom: 1px solid var(--faint);
-      transition: border-color 0.12s;
-    }
-
-    .con-filter input::placeholder {
-      color: var(--subtle);
-    }
-
-    .con-filter input:focus {
-      border-color: var(--muted);
     }
 
     .rail-foot {
@@ -1385,30 +1389,38 @@
         <span class="wordmark">Minutes</span>
         <button class="btn-new" onclick="app.newNote()">+ new meeting</button>
       </div>
-      <div class="search-box">
-        <input type="text" id="search" placeholder="search…">
-      </div>
       <div class="rail-tabs" role="tablist" aria-label="Views">
         <button class="rail-tab active" id="tab-notes" data-tab="notes" role="tab" aria-selected="true" aria-controls="note-list">Notes</button>
         <button class="rail-tab" id="tab-actions" data-tab="actions" role="tab" aria-selected="false" aria-controls="con-actions">Actions</button>
         <button class="rail-tab" id="tab-tags" data-tab="tags" role="tab" aria-selected="false" aria-controls="con-tags">Tags</button>
       </div>
 
+      <!-- Shared search row: one field per tab so each keeps its own query;
+           switchTab shows the field matching the active tab. -->
+      <div class="search-box">
+        <div class="search-field visible" data-tab="notes">
+          <input type="text" id="search" placeholder="search notes…" aria-label="Search notes">
+          <button class="search-clear" aria-label="Clear search" tabindex="-1">×</button>
+        </div>
+        <div class="search-field" data-tab="actions">
+          <input type="text" id="filter-actions" placeholder="search actions…" aria-label="Search actions">
+          <button class="search-clear" aria-label="Clear search" tabindex="-1">×</button>
+        </div>
+        <div class="search-field" data-tab="tags">
+          <input type="text" id="filter-tags" placeholder="search tags…" aria-label="Search tags">
+          <button class="search-clear" aria-label="Clear search" tabindex="-1">×</button>
+        </div>
+      </div>
+
       <div class="note-list visible" id="note-list" role="tabpanel" aria-labelledby="tab-notes"></div>
 
       <div class="consolidated" id="con-actions" role="tabpanel" aria-labelledby="tab-actions">
-        <div class="con-filter">
-          <input type="text" id="filter-actions" placeholder="filter actions…">
-        </div>
         <div class="con-list" id="list-actions">
           <!-- Person list shown by default, detail view shown when person clicked -->
         </div>
       </div>
 
       <div class="consolidated" id="con-tags" role="tabpanel" aria-labelledby="tab-tags">
-        <div class="con-filter">
-          <input type="text" id="filter-tags" placeholder="filter tags…">
-        </div>
         <div class="con-list" id="list-tags"></div>
       </div>
 
@@ -1621,7 +1633,6 @@
       const elDelModal = document.getElementById('del-modal');
       const elToast = document.getElementById('toast');
       const elSearch = document.getElementById('search');
-      const elSearchBox = document.querySelector('.search-box');
       const elTitle = document.getElementById('f-title');
       const elDate = document.getElementById('f-date');
       const elTime = document.getElementById('f-time');
@@ -1667,9 +1678,11 @@
         elConActions.classList.toggle('visible', tab === 'actions');
         elConTags.classList.toggle('visible', tab === 'tags');
 
-        // The rail search only filters the notes list; hide it on other tabs
-        // (each consolidated panel has its own filter input).
-        elSearchBox.style.display = (tab === 'notes') ? '' : 'none';
+        // Shared search row: show the field belonging to the active tab.
+        // Each tab has its own input, so queries survive tab switches.
+        document.querySelectorAll('.search-field').forEach(f => {
+          f.classList.toggle('visible', f.dataset.tab === tab);
+        });
 
         // Hide table container when switching away from actions
         const tableContainer = document.getElementById('actions-table-container');
@@ -1725,7 +1738,7 @@
 
       // Render person list in Actions tab
       function renderActionsByPerson() {
-        const q = elFilterActions.value.toLowerCase();
+        const q = elFilterActions.value.toLowerCase().trim();
 
         // Group actions by person
         const byPerson = {};
@@ -1757,7 +1770,7 @@
       </div>`;
 
         if (!people.length) {
-          elListActions.innerHTML = navHtml;
+          elListActions.innerHTML = navHtml + `<div class="list-empty">${q ? 'no results' : 'no actions yet'}</div>`;
           return;
         }
 
@@ -1779,7 +1792,7 @@
 
       // Render action list for a specific person - show sidebar + main table
       function renderActionsForPerson(person) {
-        const q = elFilterActions.value.toLowerCase();
+        const q = elFilterActions.value.toLowerCase().trim();
         const actions = data.actions
           .filter(a => a.owners.includes(person) && (!q || a.text.toLowerCase().includes(q)))
           .sort((a, b) => (b.meetingDate || '').localeCompare(a.meetingDate || ''));
@@ -1790,7 +1803,7 @@
 
         if (!actions.length) {
           elEmpty.style.display = 'flex';
-          elEmpty.textContent = 'No actions for @' + person;
+          elEmpty.textContent = q ? 'no results' : 'no actions for @' + person;
           elEditor.style.display = 'none';
           tableContainer.style.display = 'none';
           return;
@@ -1846,7 +1859,7 @@
 
       // Render all actions sorted by deadline (asc), then meeting date (asc) for missing deadline
       function renderAllActions() {
-        const q = elFilterActions.value.toLowerCase();
+        const q = elFilterActions.value.toLowerCase().trim();
 
         let actions = data.actions.slice();
         if (q) {
@@ -1868,7 +1881,7 @@
 
         if (!actions.length) {
           elEmpty.style.display = 'flex';
-          elEmpty.textContent = 'no actions yet';
+          elEmpty.textContent = q ? 'no results' : 'no actions yet';
           elEditor.style.display = 'none';
           tableContainer.style.display = 'none';
           return;
@@ -1938,8 +1951,31 @@
         else renderActionsForPerson(actionsView.selectedPerson);
       }
 
-      elFilterActions.addEventListener('input', renderConsolidated);
-      elFilterTags.addEventListener('input', renderTagsPanel);
+      // ── SEARCH FIELDS ──
+      // Uniform wiring for all three tab search fields: re-render on input,
+      // Escape clears, and the × button appears whenever there's a query.
+      const searchRerender = { notes: renderList, actions: renderConsolidated, tags: renderTagsPanel };
+      document.querySelectorAll('.search-field').forEach(field => {
+        const input = field.querySelector('input');
+        const clearBtn = field.querySelector('.search-clear');
+        const apply = () => {
+          field.classList.toggle('has-value', !!input.value);
+          searchRerender[field.dataset.tab]();
+        };
+        input.addEventListener('input', apply);
+        input.addEventListener('keydown', e => {
+          if (e.key === 'Escape' && input.value) {
+            e.stopPropagation();
+            input.value = '';
+            apply();
+          }
+        });
+        clearBtn.addEventListener('click', () => {
+          input.value = '';
+          apply();
+          input.focus();
+        });
+      });
 
       function onNotesChange(text) {
         const actions = parseActions(text);
@@ -2581,8 +2617,6 @@
         el.addEventListener('input', markMetaDirty);
       });
 
-      elSearch.addEventListener('input', renderList);
-
       // ── UTILS ──
       // Local-time YYYY-MM-DD. toISOString() is UTC and shifts the date for
       // anyone not on UTC, so deadlines/"today" must always come from here.
@@ -2699,7 +2733,7 @@
             <span class="tag-item-count">${count}</span>
           </div>`;
             }).join('')
-          : '<div class="list-empty">no tags yet</div>';
+          : `<div class="list-empty">${q ? 'no results' : 'no tags yet'}</div>`;
       }
 
       function showTagNotes(tag) {
