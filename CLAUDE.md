@@ -63,6 +63,10 @@ Three tabs in the left rail driven by `switchTab(tab)`:
 
 Two debounced savers (`scheduleSave` + `saveNote` for note body, `saveMeta` for title/date/time) write the whole root object back to IndexedDB. `setDirty` / `updateStatusBar` drive the status dot. `window.app` exposes the handful of functions referenced by inline `onclick=` attributes in the HTML — anything called from markup must be re-exported there.
 
+### Google Drive backup
+
+The `// ── GOOGLE DRIVE BACKUP ──` section backs the whole `data` root up to a single `minutes-backup.json` in the user's Drive. It's a pure browser OAuth flow (Google Identity Services token client, no server, no client secret) scoped to `drive.file` — the app can only touch the one file it creates. Because there's no server, each deployer supplies **their own** OAuth client ID (registered for their Pages origin under "Authorized JavaScript origins"); it's entered in the `#backup-modal` and persisted, along with `driveFileId`, `lastBackup`, and the `autoBackup` toggle, to `localStorage` under `minutes_settings` (`loadSettings`/`saveSettings`). The access token lives in memory only — never persisted. The GIS script is injected lazily on first use (`loadGis`) so offline launches stay clean, and because it and the Drive API are cross-origin the same-origin SW leaves them to the network (backup simply no-ops offline). `backupNow` multipart-creates or PATCH-updates the file (recovering a lost `driveFileId` via `findBackupFile`); `restoreNow` downloads it and runs it through `applyImportedData` — the shared payload-swap helper also used by file import. When `autoBackup` is on, `saveData` triggers a debounced, silent `scheduleAutoBackup` (never prompts).
+
 ### Offline / service worker
 
 `sw.js` is a cache-first SW: same-origin assets are cached on first fetch; Google Fonts use a stale-while-revalidate variant. The install step pre-caches `./` only, so other assets populate on demand.
