@@ -1098,6 +1098,95 @@
       opacity: 0.75;
     }
 
+    .mb:disabled,
+    .mb.p:disabled {
+      opacity: 0.4;
+      cursor: default;
+      border-color: var(--faint);
+    }
+
+    /* ── GOOGLE DRIVE BACKUP MODAL ── */
+    .modal-backup {
+      width: 400px;
+    }
+
+    .bk-head {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+
+    .bk-head h3 {
+      margin-bottom: 0;
+    }
+
+    .bk-status {
+      font-size: 11px;
+      color: var(--muted);
+      line-height: 1.6;
+      margin-bottom: 18px;
+    }
+
+    .bk-status.bk-busy {
+      color: var(--fg);
+    }
+
+    .bk-status.bk-error {
+      color: var(--over-fg);
+    }
+
+    .bk-field {
+      margin-bottom: 16px;
+    }
+
+    .bk-label {
+      display: block;
+      font-family: var(--mono);
+      font-size: 10px;
+      letter-spacing: 0.4px;
+      text-transform: uppercase;
+      color: var(--subtle);
+      margin-bottom: 6px;
+    }
+
+    .bk-input {
+      margin-bottom: 8px;
+    }
+
+    .bk-help {
+      font-size: 10.5px;
+      color: var(--muted);
+      line-height: 1.7;
+      margin: 0;
+    }
+
+    .bk-help a {
+      color: var(--link);
+    }
+
+    .bk-auto {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 12px;
+      color: var(--fg);
+      cursor: pointer;
+      margin-bottom: 14px;
+    }
+
+    .bk-auto input {
+      cursor: pointer;
+    }
+
+    .bk-last {
+      font-size: 10.5px;
+      color: var(--subtle);
+      min-height: 14px;
+      margin-bottom: 18px;
+    }
+
     /* ── TAG MODAL (cross-reference popup) ── */
     /* Inline clickable #tag / @mention inside the editor + read-only views */
     .tag-link,
@@ -1427,6 +1516,7 @@
       <div class="rail-foot">
         <button class="rb" onclick="app.exportData()">↑ export</button>
         <button class="rb" onclick="document.getElementById('file-import').click()">↓ import</button>
+        <button class="rb" onclick="app.openBackup()">☁ backup</button>
         <input type="file" id="file-import" class="file-import-hidden" accept=".json" onchange="app.importData(this)">
       </div>
     </nav>
@@ -1521,6 +1611,42 @@
     </div>
   </div>
 
+  <!-- google drive backup modal -->
+  <div class="overlay" id="backup-modal">
+    <div class="modal modal-backup">
+      <div class="bk-head">
+        <h3>Back up to Google Drive</h3>
+        <button class="tagm-close" id="bk-close" aria-label="close">✕</button>
+      </div>
+
+      <p class="bk-status" id="bk-status">—</p>
+
+      <div class="bk-field">
+        <label class="bk-label" for="bk-client">Google OAuth client ID</label>
+        <input class="modal-input bk-input" id="bk-client" autocomplete="off" spellcheck="false"
+          placeholder="…apps.googleusercontent.com">
+        <p class="bk-help">
+          Backups go straight to your own Drive using your own Google Cloud OAuth
+          client. <a href="https://console.cloud.google.com/apis/credentials" target="_blank" rel="noopener">Create one ↗</a>:
+          enable the Drive API, make an <em>OAuth client ID</em> of type <em>Web application</em>,
+          add this site’s URL under “Authorized JavaScript origins”, then paste the
+          client ID here. Scope is limited to files this app creates.
+        </p>
+      </div>
+
+      <label class="bk-auto">
+        <input type="checkbox" id="bk-auto"> <span>Automatically back up after changes</span>
+      </label>
+
+      <p class="bk-last" id="bk-last"></p>
+
+      <div class="modal-btns bk-btns">
+        <button class="mb" id="bk-restore">↓ Restore</button>
+        <button class="mb p" id="bk-backup">↑ Back up now</button>
+      </div>
+    </div>
+  </div>
+
   <div class="toast" id="toast"></div>
 
   <script>
@@ -1540,6 +1666,7 @@
       const DB_NAME = 'minutes_db';
       const DB_STORE = 'kv';
       const DB_KEY = 'minutes_v1';
+      const SETTINGS_KEY = 'minutes_settings';  // localStorage: backup config (no tokens)
       let _db = null;
 
       function openDB() {
@@ -1575,6 +1702,7 @@
             req.onsuccess = () => resolve();
             req.onerror = () => reject(req.error);
           });
+          if (settings.autoBackup) scheduleAutoBackup();
         } catch (e) { console.warn('IndexedDB save failed:', e); }
       }
 
@@ -1622,6 +1750,11 @@
       // ── STATE ──
       let currentId = null, isDirty = false, toastTmr = null;
       let activeTab = 'notes';
+
+      // Google Drive backup config, persisted to localStorage (never the access
+      // token — that is short-lived and kept in memory only). driveFileId lets
+      // repeat backups overwrite the same file instead of piling up copies.
+      let settings = { clientId: '', driveFileId: '', lastBackup: '', autoBackup: false };
 
       // ── DOM REFS ──
       const elNotes = document.getElementById('f-notes');
@@ -2551,22 +2684,30 @@
         showToast('exported ↑');
       }
 
+      // Replace the whole data store with an imported/restored payload and
+      // repaint. Shared by file import and Google Drive restore.
+      function applyImportedData(imported) {
+        if (!imported || !imported.meetings) throw new Error('missing meetings key');
+        clearTimeout(noteTimer.t); clearTimeout(metaTimer.t);
+        data = imported;
+        // Rebuild denormalized index (handles payloads from older versions without it)
+        data.actions = []; data.decisions = [];
+        Object.values(data.meetings).forEach(indexMeeting);
+        Object.values(data.meetings).forEach(m => { if (!m.tags) m.tags = parseTags(m.notes || ''); });
+        saveData();
+        currentId = null;
+        elEditor.style.display = 'none';
+        elEmpty.style.display = 'flex';
+        renderList();
+        updateReviewBadge();
+        if (activeTab === 'actions') renderConsolidated();
+      }
+
       async function importData(input) {
         const file = input.files[0];
         if (!file) return;
-        clearTimeout(noteTimer.t); clearTimeout(metaTimer.t);
         try {
-          const imported = JSON.parse(await file.text());
-          if (!imported.meetings) throw new Error('missing meetings key');
-          data = imported;
-          // Rebuild denormalized index (handles files from older versions without it)
-          data.actions = []; data.decisions = [];
-          Object.values(data.meetings).forEach(indexMeeting);
-          saveData();
-          currentId = null;
-          elEditor.style.display = 'none';
-          elEmpty.style.display = 'flex';
-          renderList();
+          applyImportedData(JSON.parse(await file.text()));
           showToast('imported ✓');
         } catch (e) {
           console.error('importData failed:', e);
@@ -2932,13 +3073,14 @@
         if (e.key !== 'Escape') return;
         if (elTagModal.classList.contains('open')) closeTagModal();
         if (elDelModal.classList.contains('open')) closeModal();
+        if (elBackupModal.classList.contains('open')) closeBackup();
       });
 
       window.app = {
         confirmDelete, closeModal, doDelete, newNote, openNote, exportData, importData,
         markDone, showPersonActions, filterByTag,
         showReview, showAllActions, reviewSnooze, reviewReschedule,
-        openTagModal, openPersonModal, openRefNote, closeTagModal
+        openTagModal, openPersonModal, openRefNote, closeTagModal, openBackup
       };
 
       function showPersonActions(person) {
@@ -3113,6 +3255,276 @@
         setReviewDeadline(btn, v, 'rescheduled');
       }
 
+      // ── GOOGLE DRIVE BACKUP ──
+      // Browser-only OAuth via Google Identity Services (no server, no secret).
+      // Scope is drive.file — this app can only see the single backup file it
+      // creates, nothing else in the user's Drive. The GIS script and Drive API
+      // are cross-origin, so the (same-origin-only) service worker leaves them
+      // to the network and the whole feature simply no-ops while offline.
+      const GIS_SRC = 'https://accounts.google.com/gsi/client';
+      const DRIVE_SCOPE = 'https://www.googleapis.com/auth/drive.file';
+      const BACKUP_FILENAME = 'minutes-backup.json';
+
+      let _accessToken = null, _tokenExpiry = 0;      // in-memory only
+      let _tokenClient = null, _tokenClientId = null; // rebuilt if clientId changes
+      let _tokenResolve = null, _tokenReject = null;
+      let _gisPromise = null, _autoTmr = null;
+
+      function loadSettings() {
+        try {
+          const raw = localStorage.getItem(SETTINGS_KEY);
+          if (raw) Object.assign(settings, JSON.parse(raw));
+        } catch (e) { console.warn('settings load failed:', e); }
+      }
+      function saveSettings() {
+        try { localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings)); }
+        catch (e) { console.warn('settings save failed:', e); }
+      }
+
+      // Inject the GIS client script on first use so offline launches stay clean.
+      function loadGis() {
+        if (window.google && google.accounts && google.accounts.oauth2) return Promise.resolve();
+        if (_gisPromise) return _gisPromise;
+        _gisPromise = new Promise((resolve, reject) => {
+          const s = document.createElement('script');
+          s.src = GIS_SRC; s.async = true; s.defer = true;
+          s.onload = () => resolve();
+          s.onerror = () => { _gisPromise = null; reject(new Error('Could not reach Google — check your connection.')); };
+          document.head.appendChild(s);
+        });
+        return _gisPromise;
+      }
+
+      function ensureTokenClient() {
+        if (_tokenClient && _tokenClientId === settings.clientId) return;
+        _tokenClientId = settings.clientId;
+        _tokenClient = google.accounts.oauth2.initTokenClient({
+          client_id: settings.clientId,
+          scope: DRIVE_SCOPE,
+          callback: resp => {
+            if (resp && resp.access_token) {
+              _accessToken = resp.access_token;
+              _tokenExpiry = Date.now() + ((resp.expires_in || 3600) * 1000);
+              _tokenResolve && _tokenResolve(_accessToken);
+            } else {
+              _tokenReject && _tokenReject(new Error((resp && (resp.error_description || resp.error)) || 'authorization failed'));
+            }
+            _tokenResolve = _tokenReject = null;
+          },
+          error_callback: err => {
+            _tokenReject && _tokenReject(new Error((err && err.type) === 'popup_closed'
+              ? 'sign-in was cancelled' : 'authorization failed'));
+            _tokenResolve = _tokenReject = null;
+          },
+        });
+      }
+
+      // Resolve an access token. interactive:false uses prompt:'none' for silent
+      // renewal (auto-backup); it fails quietly when consent would be required.
+      async function getToken({ interactive = true } = {}) {
+        if (!settings.clientId) throw new Error('Add your Google OAuth client ID first.');
+        if (_accessToken && Date.now() < _tokenExpiry - 60000) return _accessToken;
+        await loadGis();
+        ensureTokenClient();
+        return new Promise((resolve, reject) => {
+          _tokenResolve = resolve; _tokenReject = reject;
+          try { _tokenClient.requestAccessToken({ prompt: interactive ? '' : 'none' }); }
+          catch (e) { _tokenResolve = _tokenReject = null; reject(e); }
+        });
+      }
+
+      // Locate an existing backup (e.g. on a new device). With drive.file scope
+      // this only ever returns files this app itself created.
+      async function findBackupFile(token) {
+        const q = encodeURIComponent(`name='${BACKUP_FILENAME}' and trashed=false`);
+        const res = await fetch(
+          `https://www.googleapis.com/drive/v3/files?q=${q}&spaces=drive&fields=files(id,modifiedTime)&pageSize=1`,
+          { headers: { Authorization: 'Bearer ' + token } });
+        if (!res.ok) throw new Error('Drive request failed (' + res.status + ')');
+        const j = await res.json();
+        return j.files && j.files[0] ? j.files[0] : null;
+      }
+
+      async function resolveFileId(token) {
+        if (settings.driveFileId) return settings.driveFileId;
+        const existing = await findBackupFile(token);
+        return existing ? existing.id : null;
+      }
+
+      // Multipart create (POST) or update (PATCH) of the single backup file.
+      async function uploadBackup(token, fileId) {
+        const boundary = 'minutes' + Math.random().toString(36).slice(2);
+        const metadata = fileId ? { name: BACKUP_FILENAME } : { name: BACKUP_FILENAME, mimeType: 'application/json' };
+        const body =
+          `--${boundary}\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n${JSON.stringify(metadata)}\r\n` +
+          `--${boundary}\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n${JSON.stringify(data)}\r\n` +
+          `--${boundary}--`;
+        const base = 'https://www.googleapis.com/upload/drive/v3/files';
+        const url = fileId
+          ? `${base}/${fileId}?uploadType=multipart&fields=id`
+          : `${base}?uploadType=multipart&fields=id`;
+        return fetch(url, {
+          method: fileId ? 'PATCH' : 'POST',
+          headers: { Authorization: 'Bearer ' + token, 'Content-Type': `multipart/related; boundary=${boundary}` },
+          body,
+        });
+      }
+
+      async function backupNow({ interactive = true } = {}) {
+        const token = await getToken({ interactive });
+        let fileId = await resolveFileId(token);
+        let res = await uploadBackup(token, fileId);
+        // A remembered file id can go stale (deleted in Drive) — recreate once.
+        if (res.status === 404 && fileId) { fileId = null; res = await uploadBackup(token, null); }
+        if (!res.ok) throw new Error('Upload failed (' + res.status + ')');
+        const j = await res.json();
+        settings.driveFileId = j.id;
+        settings.lastBackup = new Date().toISOString();
+        saveSettings();
+      }
+
+      async function restoreNow() {
+        const token = await getToken({ interactive: true });
+        const fileId = await resolveFileId(token);
+        if (!fileId) throw new Error('No backup found in your Drive yet.');
+        const res = await fetch(`https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`,
+          { headers: { Authorization: 'Bearer ' + token } });
+        if (!res.ok) throw new Error('Download failed (' + res.status + ')');
+        const imported = await res.json();
+        applyImportedData(imported);  // throws if the payload is not a valid store
+        settings.driveFileId = fileId;
+        saveSettings();
+      }
+
+      // Best-effort silent backup a minute after the last change. Never prompts
+      // and never nags — if the token can't be renewed silently it just waits
+      // for the next manual "Back up now".
+      function scheduleAutoBackup() {
+        if (!settings.autoBackup || !settings.clientId) return;
+        clearTimeout(_autoTmr);
+        _autoTmr = setTimeout(() => {
+          if (navigator.onLine === false) return;
+          backupNow({ interactive: false })
+            .then(() => { if (elBackupModal.classList.contains('open')) updateBackupUI(); })
+            .catch(e => console.warn('auto-backup skipped:', e.message));
+        }, 60000);
+      }
+
+      // ── BACKUP MODAL UI ──
+      const elBackupModal = document.getElementById('backup-modal');
+      const elBkStatus = document.getElementById('bk-status');
+      const elBkClient = document.getElementById('bk-client');
+      const elBkAuto = document.getElementById('bk-auto');
+      const elBkLast = document.getElementById('bk-last');
+      const elBkBackup = document.getElementById('bk-backup');
+      const elBkRestore = document.getElementById('bk-restore');
+      const elBkClose = document.getElementById('bk-close');
+      let _restoreArmed = false;
+
+      function fmtWhen(iso) {
+        if (!iso) return '';
+        const d = new Date(iso), now = new Date();
+        const sameDay = d.toDateString() === now.toDateString();
+        const time = d.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+        return sameDay ? `today ${time}` : `${fmtDate(localDateStr(d))}, ${time}`;
+      }
+
+      function setBkStatus(msg, kind) {
+        elBkStatus.textContent = msg;
+        elBkStatus.classList.toggle('bk-busy', kind === 'busy');
+        elBkStatus.classList.toggle('bk-error', kind === 'error');
+      }
+
+      function updateBackupUI() {
+        const hasClient = !!settings.clientId.trim();
+        elBkBackup.disabled = !hasClient;
+        elBkRestore.disabled = !hasClient;
+        elBkLast.textContent = settings.lastBackup ? `Last backup: ${fmtWhen(settings.lastBackup)}` : '';
+        if (!hasClient) setBkStatus('Add your OAuth client ID below to enable backups.');
+        else setBkStatus('Your notes are backed up to a single file in your Google Drive.');
+      }
+
+      function openBackup() {
+        loadSettings();
+        elBkClient.value = settings.clientId || '';
+        elBkAuto.checked = !!settings.autoBackup;
+        _restoreArmed = false;
+        elBkRestore.textContent = '↓ Restore';
+        elBkRestore.classList.remove('p');
+        updateBackupUI();
+        elBackupModal.classList.add('open');
+      }
+      function closeBackup() { elBackupModal.classList.remove('open'); }
+
+      function commitClientId() {
+        const v = elBkClient.value.trim();
+        if (v === settings.clientId) return;
+        settings.clientId = v;
+        settings.driveFileId = '';           // different client ⇒ different Drive file space
+        _accessToken = null; _tokenExpiry = 0;
+        _tokenClient = null;                 // force rebuild with the new id
+        saveSettings();
+      }
+
+      async function handleBackup() {
+        commitClientId();
+        if (!settings.clientId) { showToast('add your client ID first'); elBkClient.focus(); return; }
+        elBkBackup.disabled = elBkRestore.disabled = true;
+        setBkStatus('Backing up…', 'busy');
+        try {
+          await backupNow({ interactive: true });
+          updateBackupUI();
+          showToast('backed up to Drive ✓');
+        } catch (e) {
+          console.error('backup failed:', e);
+          setBkStatus(e.message || 'Backup failed.', 'error');
+          showToast('backup failed');
+        } finally {
+          elBkBackup.disabled = elBkRestore.disabled = !settings.clientId;
+        }
+      }
+
+      async function handleRestore() {
+        commitClientId();
+        if (!settings.clientId) { showToast('add your client ID first'); elBkClient.focus(); return; }
+        // Restore overwrites local notes, so require a second, deliberate click.
+        if (!_restoreArmed) {
+          _restoreArmed = true;
+          elBkRestore.textContent = 'Confirm restore';
+          elBkRestore.classList.add('p');
+          setBkStatus('Restore replaces all local notes with the Drive backup. Click again to confirm.', 'error');
+          return;
+        }
+        _restoreArmed = false;
+        elBkRestore.textContent = '↓ Restore';
+        elBkRestore.classList.remove('p');
+        elBkBackup.disabled = elBkRestore.disabled = true;
+        setBkStatus('Restoring…', 'busy');
+        try {
+          await restoreNow();
+          updateBackupUI();
+          showToast('restored from Drive ✓');
+          closeBackup();
+        } catch (e) {
+          console.error('restore failed:', e);
+          setBkStatus(e.message || 'Restore failed.', 'error');
+          showToast('restore failed');
+        } finally {
+          elBkBackup.disabled = elBkRestore.disabled = !settings.clientId;
+        }
+      }
+
+      elBkBackup.addEventListener('click', handleBackup);
+      elBkRestore.addEventListener('click', handleRestore);
+      elBkClose.addEventListener('click', closeBackup);
+      elBackupModal.addEventListener('click', e => { if (e.target === elBackupModal) closeBackup(); });
+      elBkClient.addEventListener('change', () => { commitClientId(); updateBackupUI(); });
+      elBkAuto.addEventListener('change', () => {
+        settings.autoBackup = elBkAuto.checked;
+        saveSettings();
+        if (settings.autoBackup) showToast('auto-backup on');
+      });
+
       // Register service worker for offline support
       if ('serviceWorker' in navigator) {
         navigator.serviceWorker.register('./sw.js').catch(e => console.warn('SW registration failed:', e));
@@ -3120,6 +3532,7 @@
 
       // Async init: load from IndexedDB, migrating from localStorage if needed
       (async () => {
+        loadSettings();
         let stored = await loadData();
         if (!stored) {
           try {
